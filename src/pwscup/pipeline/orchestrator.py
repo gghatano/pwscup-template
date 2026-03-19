@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import subprocess
 import sys
@@ -25,7 +24,7 @@ from pwscup.pipeline.reidentify import (
 from pwscup.pipeline.safety import SafetyResult, check_minimum_k, evaluate_safety
 from pwscup.pipeline.scoring import calculate_anon_score
 from pwscup.pipeline.utility import UtilityResult, evaluate_utility
-from pwscup.schema import Schema, load_schema, validate_dataframe
+from pwscup.schema import load_schema, validate_dataframe
 
 logger = logging.getLogger(__name__)
 

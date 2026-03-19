@@ -10,7 +10,6 @@ from rich.console import Console
 from rich.table import Table
 
 from pwscup.db.engine import get_session, init_db
-from pwscup.db.repository import get_rankings, list_submissions
 from pwscup.models.submission import SubmissionDivision
 
 console = Console()
@@ -30,6 +29,7 @@ def leaderboard_command(
 
     with get_session(db_path) as session:
         from sqlmodel import select
+
         from pwscup.models.evaluation import AnonymizationEvaluation, ReidentificationEvaluation
         from pwscup.models.submission import Submission
         from pwscup.models.team import Team
@@ -45,7 +45,10 @@ def leaderboard_command(
 
             stmt = (
                 select(Submission, AnonymizationEvaluation, Team)
-                .join(AnonymizationEvaluation, AnonymizationEvaluation.submission_id == Submission.id)
+                .join(
+                    AnonymizationEvaluation,
+                    AnonymizationEvaluation.submission_id == Submission.id,
+                )
                 .join(Team, Team.id == Submission.team_id)
                 .where(Submission.division == SubmissionDivision.ANONYMIZE)
                 .order_by(AnonymizationEvaluation.final_score.desc())  # type: ignore[union-attr]
@@ -74,7 +77,10 @@ def leaderboard_command(
 
             stmt = (
                 select(Submission, ReidentificationEvaluation, Team)
-                .join(ReidentificationEvaluation, ReidentificationEvaluation.submission_id == Submission.id)
+                .join(
+                    ReidentificationEvaluation,
+                    ReidentificationEvaluation.submission_id == Submission.id,
+                )
                 .join(Team, Team.id == Submission.team_id)
                 .where(Submission.division == SubmissionDivision.REIDENTIFY)
                 .order_by(ReidentificationEvaluation.f1.desc())  # type: ignore[union-attr]

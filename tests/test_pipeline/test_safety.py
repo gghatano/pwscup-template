@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from pwscup.pipeline.safety import (
@@ -25,7 +24,10 @@ def _make_k2_df() -> pd.DataFrame:
             "gender": ["M", "M", "F", "F", "M", "M"],
             "zipcode": ["100-0001", "100-0001", "200-0002", "200-0002", "300-0003", "300-0003"],
             "occupation": ["engineer", "engineer", "teacher", "teacher", "doctor", "doctor"],
-            "education": ["bachelor", "bachelor", "master", "master", "doctor_degree", "doctor_degree"],
+            "education": [
+                "bachelor", "bachelor", "master", "master",
+                "doctor_degree", "doctor_degree",
+            ],
             "disease": ["flu", "diabetes", "healthy", "cancer", "flu", "healthy"],
             "salary": [5000000, 6000000, 4000000, 4500000, 8000000, 9000000],
             "hobby": ["reading", "sports", "music", "cooking", "travel", "gaming"],
@@ -75,8 +77,8 @@ class TestLDiversity:
         df = _make_k2_df()
         qi_cols = ["age", "gender", "zipcode", "occupation", "education"]
         sa_cols = ["disease"]
-        l = compute_l_diversity(df, qi_cols, sa_cols)
-        assert l == 2  # 各等価クラスに2種類の疾病
+        l_val = compute_l_diversity(df, qi_cols, sa_cols)
+        assert l_val == 2  # 各等価クラスに2種類の疾病
 
     def test_single_disease(self) -> None:
         df = pd.DataFrame(
@@ -86,8 +88,8 @@ class TestLDiversity:
                 "disease": ["flu", "flu"],
             }
         )
-        l = compute_l_diversity(df, ["age", "gender"], ["disease"])
-        assert l == 1
+        l_val = compute_l_diversity(df, ["age", "gender"], ["disease"])
+        assert l_val == 1
 
 
 class TestTCloseness:

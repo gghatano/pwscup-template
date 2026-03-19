@@ -5,8 +5,8 @@ from pathlib import Path
 import pandas as pd
 
 from pwscup.schema import load_schema, validate_dataframe
-from scripts.generate_data import generate_dataset
 from scripts.generate_auxiliary import generate_auxiliary
+from scripts.generate_data import generate_dataset
 
 SCHEMA_PATH = Path(__file__).parent.parent / "data" / "schema" / "schema.json"
 

@@ -15,7 +15,6 @@ from pwscup.models.evaluation import (
 from pwscup.models.submission import Submission, SubmissionDivision, SubmissionStatus
 from pwscup.models.team import Team
 
-
 # --- Team ---
 
 

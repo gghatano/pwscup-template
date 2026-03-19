@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from pwscup.sandbox.docker_runner import DockerRunner, _is_docker_available, _docker_image_exists
+from pwscup.sandbox.docker_runner import DockerRunner, _docker_image_exists, _is_docker_available
 
 EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples"
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
