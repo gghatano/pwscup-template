@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}提出履歴{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>提出履歴</h1>
+    <p>これまでの提出と評価結果の一覧です。</p>
+</div>
+
+{% if submissions %}
+<table>
+    <thead>
+        <tr>
+            <th>提出ID</th>
+            <th>チーム名</th>
+            <th>部門</th>
+            <th>スコア</th>
+            <th>状態</th>
+            <th>提出日時</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sub in submissions %}
+        <tr>
+            <td>{{ sub.id }}</td>
+            <td>{{ sub.team_name }}</td>
+            <td>{{ sub.division }}</td>
+            <td>
+                {% if sub.score is not none %}
+                    {{ "%.3f"|format(sub.score) }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>
+                {% if sub.status == "success" %}
+                    <span class="badge badge-success">成功</span>
+                {% elif sub.status == "error" %}
+                    <span class="badge badge-error">エラー</span>
+                {% else %}
+                    <span class="badge badge-pending">処理中</span>
+                {% endif %}
+            </td>
+            <td>{{ sub.submitted_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <p>まだ提出がありません。「提出・評価」ページから試してみましょう！</p>
+</div>
+{% endif %}
+{% endblock %}

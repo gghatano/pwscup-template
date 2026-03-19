@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}リーダーボード{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>リーダーボード</h1>
+    <p>各部門のスコアランキングを確認できます。</p>
+</div>
+
+<div class="tabs">
+    <button class="tab active"
+            hx-get="/leaderboard/anonymize"
+            hx-target="#lb-content"
+            hx-swap="innerHTML"
+            onclick="document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active');">
+        匿名化部門
+    </button>
+    <button class="tab"
+            hx-get="/leaderboard/reidentify"
+            hx-target="#lb-content"
+            hx-swap="innerHTML"
+            onclick="document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active');">
+        再識別部門
+    </button>
+</div>
+
+<div id="lb-content"
+     hx-get="/leaderboard/anonymize"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+</div>
+{% endblock %}

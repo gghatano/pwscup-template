@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}提出・評価{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>アルゴリズムの提出・評価</h1>
+    <p>サンプルアルゴリズムを選んで評価を実行してみましょう。
+        結果はリアルタイムで表示されます。</p>
+</div>
+
+<div class="form-section">
+    <form hx-post="/submit/evaluate" hx-target="#result" hx-indicator="#loading" hx-swap="innerHTML">
+        <div class="form-group">
+            <label for="team">チーム</label>
+            <select id="team" name="team_id" required>
+                <option value="">チームを選択してください</option>
+                {% for team in teams %}
+                <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>部門</label>
+            <div class="description">参加する部門を選択してください</div>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="division" value="anonymize" checked>
+                    <span>匿名化部門</span>
+                    <span class="radio-desc">データの有用性を保ちつつ、個人を特定できないよう変換します</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="division" value="reidentify">
+                    <span>再識別部門</span>
+                    <span class="radio-desc">匿名化されたデータから元の個人を復元する攻撃を行います</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="algorithm">アルゴリズムディレクトリ</label>
+            <div class="description">examples/ 配下のサンプル実装から選択してください</div>
+            <select id="algorithm" name="algorithm_dir" required>
+                <option value="">アルゴリズムを選択してください</option>
+                {% for example in examples %}
+                <option value="{{ example }}">{{ example }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">評価を実行</button>
+    </form>
+</div>
+
+<div id="loading" class="htmx-indicator loading">
+    評価実行中...
+</div>
+
+<div id="result"></div>
+{% endblock %}

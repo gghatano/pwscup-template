@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PWSCUP{% endblock %} - データ匿名化・再識別コンテスト</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">PWSCUP</a>
+            <div class="nav-links">
+                <a href="/">ダッシュボード</a>
+                <a href="/submit">提出・評価</a>
+                <a href="/leaderboard">リーダーボード</a>
+                <a href="/history">提出履歴</a>
+            </div>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <p>PWSCUP データ匿名化・再識別コンテスト環境</p>
+    </footer>
+</body>
+</html>

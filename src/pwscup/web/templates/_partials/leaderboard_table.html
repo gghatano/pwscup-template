@@ -1,0 +1,26 @@
+{% if entries %}
+<table>
+    <thead>
+        <tr>
+            <th>順位</th>
+            <th>チーム</th>
+            <th>スコア</th>
+            <th>提出日時</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ entry.team_name }}</td>
+            <td>{{ "%.3f"|format(entry.score) }}</td>
+            <td>{{ entry.submitted_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <p>まだ提出がありません。「提出・評価」ページから試してみましょう！</p>
+</div>
+{% endif %}

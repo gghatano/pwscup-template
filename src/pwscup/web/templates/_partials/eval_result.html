@@ -1,0 +1,110 @@
+{% if error_message %}
+<div class="result-card error">
+    <h2>エラー</h2>
+    <p>{{ error_message }}</p>
+</div>
+{% elif division == "anonymize" %}
+<div class="result-card success">
+    <h2>評価完了</h2>
+    <div class="scores-grid">
+        <div class="score-section">
+            <h3>有用性スコア (U): {{ "%.3f"|format(utility_score) }}</h3>
+            <div class="score-item">
+                <span>分布距離</span>
+                <div class="score-bar">
+                    <div style="width: {{ dist * 100 }}%"></div>
+                </div>
+                <span>{{ "%.3f"|format(dist) }}</span>
+            </div>
+            <div class="score-item">
+                <span>相関保存</span>
+                <div class="score-bar">
+                    <div style="width: {{ corr * 100 }}%"></div>
+                </div>
+                <span>{{ "%.3f"|format(corr) }}</span>
+            </div>
+            <div class="score-item">
+                <span>クエリ精度</span>
+                <div class="score-bar">
+                    <div style="width: {{ query * 100 }}%"></div>
+                </div>
+                <span>{{ "%.3f"|format(query) }}</span>
+            </div>
+            <div class="score-item">
+                <span>ML有用性</span>
+                <div class="score-bar">
+                    <div style="width: {{ ml_utility * 100 }}%"></div>
+                </div>
+                <span>{{ "%.3f"|format(ml_utility) }}</span>
+            </div>
+        </div>
+        <div class="score-section">
+            <h3>安全性スコア (S_auto): {{ "%.3f"|format(safety_score) }}</h3>
+            <div class="score-item">
+                <span>k-匿名性</span>
+                <div class="score-bar">
+                    <div style="width: {{ k_score * 100 }}%"></div>
+                </div>
+                <span>{{ "%.3f"|format(k_score) }}</span>
+            </div>
+            <div class="score-item">
+                <span>l-多様性</span>
+                <div class="score-bar">
+                    <div style="width: {{ l_score * 100 }}%"></div>
+                </div>
+                <span>{{ "%.3f"|format(l_score) }}</span>
+            </div>
+            <div class="score-item">
+                <span>t-近接性</span>
+                <div class="score-bar">
+                    <div style="width: {{ t_score * 100 }}%"></div>
+                </div>
+                <span>{{ "%.3f"|format(t_score) }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="total-score">
+        <h2>暫定スコア: {{ "%.3f"|format(total_score) }}</h2>
+        <div class="score-bar large">
+            <div style="width: {{ total_score * 100 }}%"></div>
+        </div>
+    </div>
+    <div class="meta">
+        <span>実行時間: {{ "%.1f"|format(exec_time) }}秒</span>
+        <span>レコード数: {{ n_records }}</span>
+    </div>
+</div>
+{% elif division == "reidentify" %}
+<div class="result-card success">
+    <h2>評価完了</h2>
+    <div class="score-section">
+        <h3>再識別スコア</h3>
+        <div class="score-item">
+            <span>Precision</span>
+            <div class="score-bar">
+                <div style="width: {{ precision * 100 }}%"></div>
+            </div>
+            <span>{{ "%.3f"|format(precision) }}</span>
+        </div>
+        <div class="score-item">
+            <span>Recall</span>
+            <div class="score-bar">
+                <div style="width: {{ recall * 100 }}%"></div>
+            </div>
+            <span>{{ "%.3f"|format(recall) }}</span>
+        </div>
+        <div class="score-item">
+            <span>F1スコア</span>
+            <div class="score-bar">
+                <div style="width: {{ f1 * 100 }}%"></div>
+            </div>
+            <span>{{ "%.3f"|format(f1) }}</span>
+        </div>
+        <div class="meta">
+            <span>予測数: {{ n_predicted }}</span>
+            <span>正解数: {{ n_correct }}</span>
+            <span>全レコード: {{ n_total }}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
