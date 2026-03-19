@@ -1,0 +1,5 @@
+{
+  "team": "baseline",
+  "division": "anonymize",
+  "description": "ラプラスノイズ付加 + 基本汎化によるベースライン"
+}

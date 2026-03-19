@@ -1,0 +1,6 @@
+allowed_libraries:
+  - numpy
+  - pandas
+  - scikit-learn
+  - scipy
+  - networkx

@@ -1,0 +1,73 @@
+{
+  "columns": [
+    {
+      "name": "id",
+      "type": "numeric",
+      "role": "identifier",
+      "range": [1, 100000]
+    },
+    {
+      "name": "age",
+      "type": "numeric",
+      "role": "quasi_identifier",
+      "range": [18, 90]
+    },
+    {
+      "name": "gender",
+      "type": "categorical",
+      "role": "quasi_identifier",
+      "domain": ["M", "F", "Other"]
+    },
+    {
+      "name": "zipcode",
+      "type": "categorical",
+      "role": "quasi_identifier"
+    },
+    {
+      "name": "occupation",
+      "type": "categorical",
+      "role": "quasi_identifier",
+      "domain": [
+        "engineer", "teacher", "doctor", "nurse", "lawyer",
+        "accountant", "designer", "sales", "manager", "researcher",
+        "clerk", "driver", "chef", "farmer", "writer",
+        "student", "retired", "self_employed", "civil_servant", "other"
+      ]
+    },
+    {
+      "name": "education",
+      "type": "categorical",
+      "role": "quasi_identifier",
+      "domain": ["high_school", "vocational", "bachelor", "master", "doctor_degree"]
+    },
+    {
+      "name": "disease",
+      "type": "categorical",
+      "role": "sensitive_attribute",
+      "domain": [
+        "diabetes", "flu", "cancer", "heart_disease", "asthma",
+        "allergy", "depression", "hypertension", "obesity", "arthritis",
+        "migraine", "pneumonia", "bronchitis", "anemia", "healthy"
+      ]
+    },
+    {
+      "name": "salary",
+      "type": "numeric",
+      "role": "sensitive_attribute",
+      "range": [2000000, 20000000]
+    },
+    {
+      "name": "hobby",
+      "type": "categorical",
+      "role": "non_sensitive",
+      "domain": [
+        "reading", "sports", "music", "cooking", "travel",
+        "gaming", "photography", "gardening", "fishing", "art",
+        "movies", "hiking", "yoga", "dancing", "crafts",
+        "volunteering", "programming", "shopping", "pets", "none"
+      ]
+    }
+  ],
+  "quasi_identifiers": ["age", "gender", "zipcode", "occupation", "education"],
+  "sensitive_attributes": ["disease", "salary"]
+}

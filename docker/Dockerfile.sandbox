@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+# 非rootユーザーの作成
+RUN groupadd -r runner && useradd -r -g runner -m runner
+
+# 作業ディレクトリ
+WORKDIR /workspace
+
+# ホワイトリストのライブラリをインストール
+COPY configs/whitelist.yaml /tmp/whitelist.yaml
+RUN pip install --no-cache-dir \
+    numpy \
+    pandas \
+    scikit-learn \
+    scipy \
+    networkx
+
+# マウントポイント
+RUN mkdir -p /input /output /submission && \
+    chown runner:runner /output
+
+# 非rootで実行
+USER runner
+
+# エントリーポイント
+ENTRYPOINT ["python"]
