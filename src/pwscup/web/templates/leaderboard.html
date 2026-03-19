@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<h1>Leaderboard</h1>
+
+<div class="card">
+    <div class="tabs">
+        <a class="tab {% if active_division == 'anonymize' %}active{% endif %}"
+           hx-get="/leaderboard/anonymize" hx-target="#leaderboard-content"
+           hx-push-url="false">Anonymization</a>
+        <a class="tab {% if active_division == 'reidentify' %}active{% endif %}"
+           hx-get="/leaderboard/reidentify" hx-target="#leaderboard-content"
+           hx-push-url="false">Re-identification</a>
+    </div>
+    <div id="leaderboard-content">
+        {% include "_partials/leaderboard_table.html" %}
+    </div>
+</div>
+{% endblock %}

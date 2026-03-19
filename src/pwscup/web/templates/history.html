@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Submission History{% endblock %}
+{% block content %}
+<h1>Submission History</h1>
+
+<div class="card">
+    {% if submissions %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Team</th>
+                <th>Division</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Time (s)</th>
+                <th>Submitted</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in submissions %}
+            <tr>
+                <td>{{ sub.id }}</td>
+                <td>{{ sub.team_name }}</td>
+                <td>{{ sub.division }}</td>
+                <td>{{ sub.status }}</td>
+                <td>
+                    {% if sub.score is not none %}
+                    <span class="score good">{{ "%.4f"|format(sub.score) }}</span>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if sub.execution_time_sec is not none %}
+                    {{ "%.1f"|format(sub.execution_time_sec) }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>{{ sub.submitted_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No submissions yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

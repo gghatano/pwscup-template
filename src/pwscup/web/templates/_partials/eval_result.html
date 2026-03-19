@@ -1,0 +1,34 @@
+{% if success %}
+<div class="alert alert-success">
+    <strong>Evaluation completed successfully!</strong>
+</div>
+<div class="card">
+    <h2>Results - {{ division_label }}</h2>
+    <table>
+        <tbody>
+            {% if division == "anonymize" %}
+            <tr><th>Utility Score</th><td class="score">{{ "%.4f"|format(utility_score) }}</td></tr>
+            <tr><th>Distribution Distance</th><td>{{ "%.4f"|format(distribution_distance) }}</td></tr>
+            <tr><th>Correlation Preservation</th><td>{{ "%.4f"|format(correlation_preservation) }}</td></tr>
+            <tr><th>Query Accuracy</th><td>{{ "%.4f"|format(query_accuracy) }}</td></tr>
+            <tr><th>ML Utility</th><td>{{ "%.4f"|format(ml_utility) }}</td></tr>
+            <tr><th>Safety Score (auto)</th><td class="score">{{ "%.4f"|format(safety_score_auto) }}</td></tr>
+            <tr><th>k-anonymity</th><td>{{ k_anonymity }}</td></tr>
+            <tr><th>l-diversity</th><td>{{ l_diversity }}</td></tr>
+            <tr><th>t-closeness</th><td>{{ "%.4f"|format(t_closeness) }}</td></tr>
+            <tr><th>Final Score</th><td class="score good">{{ "%.4f"|format(anon_score) }}</td></tr>
+            {% else %}
+            <tr><th>Precision</th><td>{{ "%.4f"|format(precision) }}</td></tr>
+            <tr><th>Recall</th><td>{{ "%.4f"|format(recall) }}</td></tr>
+            <tr><th>F1 Score</th><td class="score">{{ "%.4f"|format(f1) }}</td></tr>
+            <tr><th>Difficulty Weighted Score</th><td class="score good">{{ "%.4f"|format(difficulty_weighted_score) }}</td></tr>
+            {% endif %}
+            <tr><th>Execution Time</th><td>{{ "%.1f"|format(execution_time) }}s</td></tr>
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-error">
+    <strong>Evaluation failed:</strong> {{ error }}
+</div>
+{% endif %}
