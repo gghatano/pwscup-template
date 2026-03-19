@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
 
-from pwscup.db.engine import get_engine, init_db
+from pwscup.db.engine import reset_engine
 from pwscup.models.team import Division, Team
 from pwscup.web.routes import DB_PATH, router
 
@@ -23,7 +23,10 @@ STATIC_DIR = Path(__file__).parent / "static"
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Initialize DB and register demo teams on startup."""
+    from pwscup.db.engine import get_engine, init_db
+
     logger.info("Initializing database at %s", DB_PATH)
+    reset_engine()  # Ensure fresh engine for demo DB
     init_db(DB_PATH)
 
     engine = get_engine(DB_PATH)

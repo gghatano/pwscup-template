@@ -66,8 +66,16 @@ def _get_algorithms() -> list[AlgorithmInfo]:
     return algos
 
 
+def _ensure_db() -> None:
+    """Ensure DB is initialized (idempotent)."""
+    from pwscup.db.engine import init_db
+
+    init_db(DB_PATH)
+
+
 def _get_session() -> Session:
     """Get a DB session."""
+    _ensure_db()
     engine = get_engine(DB_PATH)
     return Session(engine)
 

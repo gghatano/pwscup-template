@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}ダッシュボード{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>PWSCUP データ匿名化・再識別コンテスト</h1>
+    <p>データの匿名化技術と再識別技術を競い合うコンテスト環境です。
+        アルゴリズムを提出し、有用性と安全性のバランスを追求しましょう。</p>
+</div>
+
+<div class="cards">
+    <div class="card">
+        <h3>匿名化部門</h3>
+        <p>データの有用性を保ちつつ、個人を特定できないよう変換します。
+            分布の保存、相関の維持、クエリ精度など多角的に評価されます。</p>
+    </div>
+    <div class="card">
+        <h3>再識別部門</h3>
+        <p>匿名化されたデータから元の個人を復元する攻撃を行います。
+            補助知識を活用し、どれだけ正確にレコードを対応付けられるかを競います。</p>
+    </div>
+    <div class="card">
+        <h3>スコアリング</h3>
+        <p>有用性 × 安全性。片方を犠牲にすると0点になります。
+            バランスの取れた匿名化こそが高スコアへの鍵です。</p>
+    </div>
+</div>
+
+<div class="quick-actions">
+    <a href="/submit" class="btn btn-primary">評価を試す →</a>
+    <a href="/leaderboard" class="btn btn-secondary">リーダーボードを見る →</a>
+</div>
+
+<div class="section">
+    <h2>最新リーダーボード（上位5件）</h2>
+    {% if top_entries %}
+    <table>
+        <thead>
+            <tr>
+                <th>順位</th>
+                <th>チーム</th>
+                <th>部門</th>
+                <th>スコア</th>
+                <th>提出日時</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in top_entries %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ entry.team_name }}</td>
+                <td>{{ entry.division }}</td>
+                <td>{{ "%.3f"|format(entry.score) }}</td>
+                <td>{{ entry.submitted_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>まだ提出がありません。「提出・評価」ページから試してみましょう！</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
