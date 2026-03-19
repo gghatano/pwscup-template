@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import logging
+import shutil
 import sys
 import tempfile
 import time
@@ -46,6 +47,9 @@ CONFIG_PATH = PROJECT_ROOT / "configs" / "contest.yaml"
 DB_PATH = PROJECT_ROOT / "data" / "pwscup_demo.db"
 EXAMPLES_DIR = PROJECT_ROOT / "examples"
 
+# Max submissions shown in history
+HISTORY_LIMIT = 100
+
 
 @dataclass
 class AlgorithmInfo:
@@ -66,24 +70,30 @@ def _get_algorithms() -> list[AlgorithmInfo]:
     return algos
 
 
-def _ensure_db() -> None:
-    """Ensure DB is initialized (idempotent)."""
-    from pwscup.db.engine import init_db
-
-    init_db(DB_PATH)
-
-
 def _get_session() -> Session:
     """Get a DB session."""
-    _ensure_db()
     engine = get_engine(DB_PATH)
     return Session(engine)
 
 
-def _get_teams(session: Session) -> list[Team]:
-    """Get all teams."""
-    statement: Any = select(Team)
-    return list(session.exec(statement).all())
+def _get_submission_score(session: Session, sub: Submission) -> Optional[float]:
+    """Extract score for a submission from its evaluation record."""
+    if sub.status != SubmissionStatus.COMPLETED:
+        return None
+    if sub.division == SubmissionDivision.ANONYMIZE:
+        eval_stmt: Any = select(AnonymizationEvaluation).where(
+            AnonymizationEvaluation.submission_id == sub.id
+        )
+        anon_eval: Optional[AnonymizationEvaluation] = session.exec(eval_stmt).first()
+        return anon_eval.final_score if anon_eval else None
+    else:
+        eval_stmt = select(ReidentificationEvaluation).where(
+            ReidentificationEvaluation.submission_id == sub.id
+        )
+        reid_evals = list(session.exec(eval_stmt).all())
+        if reid_evals:
+            return max(e.difficulty_weighted_score for e in reid_evals)
+        return None
 
 
 def _get_leaderboard_entries(
@@ -92,7 +102,6 @@ def _get_leaderboard_entries(
     """Build leaderboard entries for a given division."""
     sub_division = SubmissionDivision(division)
 
-    # Get completed submissions for this division
     statement: Any = (
         select(Submission)
         .where(Submission.division == sub_division)
@@ -101,40 +110,28 @@ def _get_leaderboard_entries(
     )
     submissions = list(session.exec(statement).all())
 
+    # Pre-fetch all teams to avoid N+1 queries
+    team_stmt: Any = select(Team)
+    teams_by_id = {t.id: t.name for t in session.exec(team_stmt).all()}
+
     # Group by team, get best score
     team_best: dict[int, dict[str, Any]] = {}
     for sub in submissions:
-        score: Optional[float] = None
-        if division == "anonymize":
-            eval_stmt: Any = select(AnonymizationEvaluation).where(
-                AnonymizationEvaluation.submission_id == sub.id
-            )
-            anon_eval: Optional[AnonymizationEvaluation] = session.exec(eval_stmt).first()
-            if anon_eval:
-                score = anon_eval.final_score
-        else:
-            eval_stmt = select(ReidentificationEvaluation).where(
-                ReidentificationEvaluation.submission_id == sub.id
-            )
-            reid_evals = list(session.exec(eval_stmt).all())
-            if reid_evals:
-                score = max(e.difficulty_weighted_score for e in reid_evals)
-
+        score = _get_submission_score(session, sub)
         if score is None:
             continue
 
         team_id = sub.team_id
-        if team_id not in team_best or score > team_best[team_id]["best_score"]:
-            # Get team name
-            team = session.get(Team, team_id)
-            team_name = team.name if team else f"Team {team_id}"
+        if team_id not in team_best:
             team_best[team_id] = {
-                "team_name": team_name,
+                "team_name": teams_by_id.get(team_id, f"Team {team_id}"),
                 "best_score": score,
-                "count": team_best.get(team_id, {}).get("count", 0) + 1,
+                "count": 1,
             }
         else:
-            team_best[team_id]["count"] = team_best[team_id].get("count", 0) + 1
+            team_best[team_id]["count"] += 1
+            if score > team_best[team_id]["best_score"]:
+                team_best[team_id]["best_score"] = score
 
     entries = sorted(team_best.values(), key=lambda x: x["best_score"], reverse=True)
     if limit is not None:
@@ -154,6 +151,55 @@ def _get_dashboard_leaderboard(session: Session) -> list[dict[str, Any]]:
             })
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:5]
+
+
+def _run_algorithm(algo_path: Path, func_name: str, *args: str) -> tuple[Path, float]:
+    """Run an algorithm function and return (output_path, exec_time).
+
+    Handles sys.path manipulation and module cleanup.
+    """
+    module_name = "algorithm"
+    if module_name in sys.modules:
+        del sys.modules[module_name]
+
+    old_path = sys.path.copy()
+    sys.path.insert(0, str(algo_path))
+    try:
+        mod = importlib.import_module(module_name)
+        importlib.reload(mod)
+        func = getattr(mod, func_name)
+        start = time.time()
+        func(*args)
+        exec_time = time.time() - start
+        return Path(args[-1]), exec_time
+    finally:
+        sys.path = old_path
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+
+def _save_submission(
+    session: Session,
+    team_id: int,
+    division: SubmissionDivision,
+    algo_path: Path,
+    success: bool,
+    exec_time: float,
+    error: str = "",
+) -> Submission:
+    """Create and persist a Submission record."""
+    sub = Submission(
+        team_id=team_id,
+        division=division,
+        file_path=str(algo_path),
+        status=SubmissionStatus.COMPLETED if success else SubmissionStatus.ERROR,
+        error_message=error,
+        execution_time_sec=exec_time,
+    )
+    session.add(sub)
+    session.commit()
+    session.refresh(sub)
+    return sub
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -176,7 +222,8 @@ async def submit_page(request: Request) -> HTMLResponse:
     session = _get_session()
     try:
         algorithms = _get_algorithms()
-        teams = _get_teams(session)
+        team_stmt: Any = select(Team)
+        teams = list(session.exec(team_stmt).all())
         return templates.TemplateResponse(
             "submit.html",
             {"request": request, "algorithms": algorithms, "teams": teams},
@@ -212,29 +259,6 @@ async def evaluate(
         session.close()
 
 
-def _run_anonymize_algorithm(algo_path: Path) -> tuple[Path, float]:
-    """Run anonymize algorithm and return (output_csv, exec_time)."""
-    module_name = "algorithm"
-    # Clean up previous imports
-    if module_name in sys.modules:
-        del sys.modules[module_name]
-
-    old_path = sys.path.copy()
-    sys.path.insert(0, str(algo_path))
-    try:
-        mod = importlib.import_module(module_name)
-        importlib.reload(mod)
-        output_csv = Path(tempfile.mkdtemp()) / "anonymized.csv"
-        start = time.time()
-        mod.anonymize(str(ORIGINAL_CSV), str(SCHEMA_PATH), str(output_csv))
-        exec_time = time.time() - start
-        return output_csv, exec_time
-    finally:
-        sys.path = old_path
-        if module_name in sys.modules:
-            del sys.modules[module_name]
-
-
 def _evaluate_anonymize(
     request: Request,
     session: Session,
@@ -243,34 +267,33 @@ def _evaluate_anonymize(
     config: Any,
 ) -> HTMLResponse:
     """Evaluate anonymization submission."""
-    # Run algorithm
-    output_csv, exec_time = _run_anonymize_algorithm(algo_path)
+    tmp_dir = tempfile.mkdtemp()
+    try:
+        output_csv = Path(tmp_dir) / "anonymized.csv"
+        _, exec_time = _run_algorithm(
+            algo_path, "anonymize",
+            str(ORIGINAL_CSV), str(SCHEMA_PATH), str(output_csv),
+        )
 
-    # Read data
-    original_df = pd.read_csv(ORIGINAL_CSV)
-    anonymized_df = pd.read_csv(output_csv)
+        original_df = pd.read_csv(ORIGINAL_CSV)
+        anonymized_df = pd.read_csv(output_csv)
 
-    # Drop identifier columns
-    schema = load_schema(SCHEMA_PATH)
-    id_cols = [c.name for c in schema.get_columns_by_role("identifier")]
-    original_df = original_df.drop(columns=[c for c in id_cols if c in original_df.columns])
+        # Drop identifier columns
+        schema = load_schema(SCHEMA_PATH)
+        id_cols = [c.name for c in schema.get_columns_by_role("identifier")]
+        original_df = original_df.drop(
+            columns=[c for c in id_cols if c in original_df.columns]
+        )
 
-    # Evaluate
-    orch = PipelineOrchestrator(SCHEMA_PATH, config)
-    result = orch.evaluate_anonymization_direct(original_df, anonymized_df)
+        orch = PipelineOrchestrator(SCHEMA_PATH, config)
+        result = orch.evaluate_anonymization_direct(original_df, anonymized_df)
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    # Save to DB
-    sub = Submission(
-        team_id=team_id,
-        division=SubmissionDivision.ANONYMIZE,
-        file_path=str(algo_path),
-        status=SubmissionStatus.COMPLETED if result.success else SubmissionStatus.ERROR,
-        error_message=result.error or "",
-        execution_time_sec=exec_time,
+    sub = _save_submission(
+        session, team_id, SubmissionDivision.ANONYMIZE, algo_path,
+        result.success, exec_time, result.error or "",
     )
-    session.add(sub)
-    session.commit()
-    session.refresh(sub)
 
     if result.success and result.utility and result.safety:
         anon_eval = AnonymizationEvaluation(
@@ -295,7 +318,6 @@ def _evaluate_anonymize(
                 "request": request,
                 "success": True,
                 "division": "anonymize",
-                "division_label": "Anonymization",
                 "utility_score": result.utility.utility_score,
                 "distribution_distance": result.utility.distribution_distance,
                 "correlation_preservation": result.utility.correlation_preservation,
@@ -324,7 +346,6 @@ def _evaluate_reidentify(
     config: Any,
 ) -> HTMLResponse:
     """Evaluate re-identification submission."""
-    # First, run anonymization baseline to generate anonymized data
     baseline_algo = EXAMPLES_DIR / "anonymize_example"
     if not baseline_algo.exists():
         return templates.TemplateResponse(
@@ -336,51 +357,39 @@ def _evaluate_reidentify(
             },
         )
 
-    anon_csv, _anon_time = _run_anonymize_algorithm(baseline_algo)
-
-    # Run re-identification algorithm
-    module_name = "algorithm"
-    if module_name in sys.modules:
-        del sys.modules[module_name]
-
-    old_path = sys.path.copy()
-    sys.path.insert(0, str(algo_path))
+    tmp_dir = tempfile.mkdtemp()
     try:
-        mod = importlib.import_module(module_name)
-        importlib.reload(mod)
-        output_json = Path(tempfile.mkdtemp()) / "mappings.json"
-        start = time.time()
-        mod.reidentify(str(anon_csv), str(AUXILIARY_CSV), str(SCHEMA_PATH), str(output_json))
-        exec_time = time.time() - start
+        # Generate anonymized data from baseline
+        anon_csv = Path(tmp_dir) / "anonymized.csv"
+        _run_algorithm(
+            baseline_algo, "anonymize",
+            str(ORIGINAL_CSV), str(SCHEMA_PATH), str(anon_csv),
+        )
+
+        # Run re-identification
+        output_json = Path(tmp_dir) / "mappings.json"
+        _, exec_time = _run_algorithm(
+            algo_path, "reidentify",
+            str(anon_csv), str(AUXILIARY_CSV), str(SCHEMA_PATH), str(output_json),
+        )
+
+        mappings = load_mappings(output_json)
     finally:
-        sys.path = old_path
-        if module_name in sys.modules:
-            del sys.modules[module_name]
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    # Load results and evaluate
-    mappings = load_mappings(output_json)
     ground_truth = load_ground_truth(GROUND_TRUTH_PATH)
-
     orch = PipelineOrchestrator(SCHEMA_PATH, config)
     result = orch.evaluate_reidentification_direct(mappings, ground_truth)
 
-    # Save to DB
-    sub = Submission(
-        team_id=team_id,
-        division=SubmissionDivision.REIDENTIFY,
-        file_path=str(algo_path),
-        status=SubmissionStatus.COMPLETED if result.success else SubmissionStatus.ERROR,
-        error_message=result.error or "",
-        execution_time_sec=exec_time,
+    sub = _save_submission(
+        session, team_id, SubmissionDivision.REIDENTIFY, algo_path,
+        result.success, exec_time, result.error or "",
     )
-    session.add(sub)
-    session.commit()
-    session.refresh(sub)
 
     if result.success and result.result:
         reid_eval = ReidentificationEvaluation(
             submission_id=sub.id,  # type: ignore[arg-type]
-            target_submission_id=0,  # Demo: no specific target
+            target_submission_id=0,
             precision=result.result.precision,
             recall=result.result.recall,
             f1=result.result.f1,
@@ -395,7 +404,6 @@ def _evaluate_reidentify(
                 "request": request,
                 "success": True,
                 "division": "reidentify",
-                "division_label": "Re-identification",
                 "precision": result.result.precision,
                 "recall": result.result.recall,
                 "f1": result.result.f1,
@@ -449,38 +457,23 @@ async def history(request: Request) -> HTMLResponse:
     """Submission history page."""
     session = _get_session()
     try:
-        statement: Any = select(Submission).order_by(
-            desc(Submission.submitted_at)  # type: ignore[arg-type]
+        statement: Any = (
+            select(Submission)
+            .order_by(desc(Submission.submitted_at))  # type: ignore[arg-type]
+            .limit(HISTORY_LIMIT)
         )
         subs = list(session.exec(statement).all())
 
+        # Pre-fetch teams to avoid N+1
+        team_stmt: Any = select(Team)
+        teams_by_id = {t.id: t.name for t in session.exec(team_stmt).all()}
+
         submissions: list[dict[str, Any]] = []
         for sub in subs:
-            team = session.get(Team, sub.team_id)
-            team_name = team.name if team else f"Team {sub.team_id}"
-
-            score: Optional[float] = None
-            if sub.status == SubmissionStatus.COMPLETED:
-                if sub.division == SubmissionDivision.ANONYMIZE:
-                    eval_stmt: Any = select(AnonymizationEvaluation).where(
-                        AnonymizationEvaluation.submission_id == sub.id
-                    )
-                    anon_eval: Optional[AnonymizationEvaluation] = (
-                        session.exec(eval_stmt).first()
-                    )
-                    if anon_eval:
-                        score = anon_eval.final_score
-                else:
-                    eval_stmt = select(ReidentificationEvaluation).where(
-                        ReidentificationEvaluation.submission_id == sub.id
-                    )
-                    reid_evals = list(session.exec(eval_stmt).all())
-                    if reid_evals:
-                        score = max(e.difficulty_weighted_score for e in reid_evals)
-
+            score = _get_submission_score(session, sub)
             submissions.append({
                 "id": sub.id,
-                "team_name": team_name,
+                "team_name": teams_by_id.get(sub.team_id, f"Team {sub.team_id}"),
                 "division": sub.division.value,
                 "status": sub.status.value,
                 "score": score,
