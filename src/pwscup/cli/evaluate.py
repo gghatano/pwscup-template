@@ -150,7 +150,7 @@ def evaluate_reidentify(
         import tempfile
         import time
 
-        from algorithm import reidentify  # type: ignore[import-not-found]
+        from algorithm import reidentify
 
         output_dir = Path(tempfile.mkdtemp())
         output_json = output_dir / "mappings.json"

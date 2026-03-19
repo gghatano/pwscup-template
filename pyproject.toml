@@ -25,6 +25,8 @@ dev = [
     "pytest-cov>=4.0.0",
     "ruff>=0.4.0",
     "mypy>=1.8.0",
+    "pandas-stubs>=2.0.0",
+    "types-PyYAML>=6.0",
 ]
 
 [project.scripts]
@@ -43,6 +45,13 @@ select = ["E", "F", "I", "W"]
 [tool.mypy]
 python_version = "3.9"
 strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "scipy.*",
+    "sklearn.*",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

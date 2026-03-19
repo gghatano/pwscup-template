@@ -52,8 +52,10 @@ def evaluate_utility(
 
     # 識別子を除外
     cols = schema.non_identifier_columns
-    orig = original_df[[c for c in cols if c in original_df.columns]].copy()
-    anon = anonymized_df[[c for c in cols if c in anonymized_df.columns]].copy()
+    orig_cols = [c for c in cols if c in original_df.columns]
+    anon_cols = [c for c in cols if c in anonymized_df.columns]
+    orig = pd.DataFrame(original_df[orig_cols])
+    anon = pd.DataFrame(anonymized_df[anon_cols])
 
     dist_score = _distribution_distance(orig, anon, schema)
     corr_score = _correlation_preservation(orig, anon, schema)

@@ -120,11 +120,10 @@ def compute_l_diversity(
     if not qi_cols or not sa_cols or len(df) == 0:
         return 0
 
-    qi_data = df[qi_cols].astype(str)
     min_l = len(df)  # 初期値を最大に
 
     for sa_col in sa_cols:
-        grouped = df.groupby(list(qi_data.columns))[sa_col]
+        grouped = df.groupby(qi_cols)[sa_col]
         for _, group in grouped:
             n_unique = group.nunique()
             min_l = min(min_l, n_unique)
@@ -155,8 +154,7 @@ def compute_t_closeness(
     for sa_col in sa_cols:
         global_dist = df[sa_col]
 
-        qi_data = df[qi_cols].astype(str)
-        grouped = df.groupby(list(qi_data.columns))[sa_col]
+        grouped = df.groupby(qi_cols)[sa_col]
 
         for _, group in grouped:
             if len(group) < 2:

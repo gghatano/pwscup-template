@@ -103,9 +103,10 @@ def load_mappings(path: Path) -> list[dict[str, Any]]:
         data = json.load(f)
 
     if isinstance(data, dict) and "mappings" in data:
-        return data["mappings"]  # type: ignore[no-any-return]
+        mappings: list[dict[str, Any]] = data["mappings"]
+        return mappings
     if isinstance(data, list):
-        return data  # type: ignore[return-value]
+        return data
 
     raise ValueError(f"不正なマッピング形式: {path}")
 

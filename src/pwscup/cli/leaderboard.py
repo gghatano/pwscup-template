@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
@@ -28,6 +28,7 @@ def leaderboard_command(
     init_db(db_path)
 
     with get_session(db_path) as session:
+        from sqlalchemy import desc
         from sqlmodel import select
 
         from pwscup.models.evaluation import AnonymizationEvaluation, ReidentificationEvaluation
@@ -43,15 +44,15 @@ def leaderboard_command(
             table.add_column("安全性", justify="right")
             table.add_column("スコア", justify="right", style="green")
 
-            stmt = (
+            stmt: Any = (
                 select(Submission, AnonymizationEvaluation, Team)
                 .join(
                     AnonymizationEvaluation,
-                    AnonymizationEvaluation.submission_id == Submission.id,
+                    AnonymizationEvaluation.submission_id == Submission.id,  # type: ignore[arg-type]
                 )
-                .join(Team, Team.id == Submission.team_id)
+                .join(Team, Team.id == Submission.team_id)  # type: ignore[arg-type]
                 .where(Submission.division == SubmissionDivision.ANONYMIZE)
-                .order_by(AnonymizationEvaluation.final_score.desc())  # type: ignore[union-attr]
+                .order_by(desc(AnonymizationEvaluation.final_score))  # type: ignore[arg-type]
             )
             results = session.exec(stmt).all()
 
@@ -79,11 +80,11 @@ def leaderboard_command(
                 select(Submission, ReidentificationEvaluation, Team)
                 .join(
                     ReidentificationEvaluation,
-                    ReidentificationEvaluation.submission_id == Submission.id,
+                    ReidentificationEvaluation.submission_id == Submission.id,  # type: ignore[arg-type]
                 )
-                .join(Team, Team.id == Submission.team_id)
+                .join(Team, Team.id == Submission.team_id)  # type: ignore[arg-type]
                 .where(Submission.division == SubmissionDivision.REIDENTIFY)
-                .order_by(ReidentificationEvaluation.f1.desc())  # type: ignore[union-attr]
+                .order_by(desc(ReidentificationEvaluation.f1))  # type: ignore[arg-type]
             )
             results = session.exec(stmt).all()
 

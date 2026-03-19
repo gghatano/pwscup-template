@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 
+from sqlalchemy import desc
 from sqlmodel import Session, select
 
 from pwscup.models.evaluation import (
@@ -36,13 +37,14 @@ def get_team(session: Session, team_id: int) -> Optional[Team]:
 
 def get_team_by_name(session: Session, name: str) -> Optional[Team]:
     """チームを名前で取得する."""
-    statement = select(Team).where(Team.name == name)
-    return session.exec(statement).first()
+    statement: Any = select(Team).where(Team.name == name)
+    result: Optional[Team] = session.exec(statement).first()
+    return result
 
 
 def list_teams(session: Session) -> list[Team]:
     """全チームを取得する."""
-    statement = select(Team)
+    statement: Any = select(Team)
     return list(session.exec(statement).all())
 
 
@@ -106,12 +108,12 @@ def list_submissions(
     division: Optional[SubmissionDivision] = None,
 ) -> list[Submission]:
     """提出を一覧取得する."""
-    statement = select(Submission)
+    statement: Any = select(Submission)
     if team_id is not None:
         statement = statement.where(Submission.team_id == team_id)
     if division is not None:
         statement = statement.where(Submission.division == division)
-    statement = statement.order_by(Submission.submitted_at.desc())  # type: ignore[union-attr]
+    statement = statement.order_by(desc(Submission.submitted_at))  # type: ignore[arg-type]
     return list(session.exec(statement).all())
 
 
@@ -123,12 +125,12 @@ def count_daily_submissions(
     """本日の提出回数をカウントする."""
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow_start = today_start + timedelta(days=1)
-    statement = (
+    statement: Any = (
         select(Submission)
         .where(Submission.team_id == team_id)
         .where(Submission.division == division)
-        .where(Submission.submitted_at >= today_start)  # type: ignore[arg-type]
-        .where(Submission.submitted_at < tomorrow_start)  # type: ignore[arg-type]
+        .where(Submission.submitted_at >= today_start)
+        .where(Submission.submitted_at < tomorrow_start)
     )
     return len(list(session.exec(statement).all()))
 
@@ -150,10 +152,11 @@ def get_anon_evaluation_by_submission(
     session: Session, submission_id: int
 ) -> Optional[AnonymizationEvaluation]:
     """提出IDから匿名化評価結果を取得する."""
-    statement = select(AnonymizationEvaluation).where(
+    statement: Any = select(AnonymizationEvaluation).where(
         AnonymizationEvaluation.submission_id == submission_id
     )
-    return session.exec(statement).first()
+    result: Optional[AnonymizationEvaluation] = session.exec(statement).first()
+    return result
 
 
 # --- ReidentificationEvaluation ---
@@ -173,7 +176,7 @@ def list_reid_evaluations_for_target(
     session: Session, target_submission_id: int
 ) -> list[ReidentificationEvaluation]:
     """特定の匿名化提出に対する全再識別評価を取得する."""
-    statement = select(ReidentificationEvaluation).where(
+    statement: Any = select(ReidentificationEvaluation).where(
         ReidentificationEvaluation.target_submission_id == target_submission_id
     )
     return list(session.exec(statement).all())
@@ -183,7 +186,7 @@ def list_reid_evaluations_for_submission(
     session: Session, submission_id: int
 ) -> list[ReidentificationEvaluation]:
     """特定の再識別提出の全評価結果を取得する."""
-    statement = select(ReidentificationEvaluation).where(
+    statement: Any = select(ReidentificationEvaluation).where(
         ReidentificationEvaluation.submission_id == submission_id
     )
     return list(session.exec(statement).all())
@@ -202,7 +205,7 @@ def save_ranking(session: Session, ranking: Ranking) -> Ranking:
 
 def get_rankings(session: Session, phase: str = "qualifying") -> list[Ranking]:
     """ランキングを取得する（総合順位順）."""
-    statement = (
+    statement: Any = (
         select(Ranking)
         .where(Ranking.phase == phase)
         .order_by(Ranking.total_rank)  # type: ignore[arg-type]
