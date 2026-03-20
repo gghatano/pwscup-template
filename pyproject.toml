@@ -17,6 +17,10 @@ dependencies = [
     "pydantic>=2.0.0",
     "pyyaml>=6.0",
     "sqlmodel>=0.0.14",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.20.0",
+    "jinja2>=3.1.0",
+    "python-multipart>=0.0.6",
 ]
 
 [project.optional-dependencies]
@@ -25,6 +29,8 @@ dev = [
     "pytest-cov>=4.0.0",
     "ruff>=0.4.0",
     "mypy>=1.8.0",
+    "pandas-stubs>=2.0.0",
+    "types-PyYAML>=6.0",
 ]
 
 [project.scripts]
@@ -43,6 +49,13 @@ select = ["E", "F", "I", "W"]
 [tool.mypy]
 python_version = "3.9"
 strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "scipy.*",
+    "sklearn.*",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

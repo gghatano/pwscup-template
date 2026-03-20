@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -50,9 +49,9 @@ def evaluate_anonymize(
     # 匿名化の実行
     sys.path.insert(0, str(submission_dir))
     try:
-        from algorithm import anonymize  # type: ignore[import-not-found]
-
         import tempfile
+
+        from algorithm import anonymize  # type: ignore[import-not-found]
 
         output_dir = Path(tempfile.mkdtemp())
         output_csv = output_dir / "anonymized.csv"
@@ -109,9 +108,15 @@ def evaluate_anonymize(
     table.add_row("  クエリ精度", f"{result.utility.query_accuracy:.3f}")
     table.add_row("  ML有用性", f"{result.utility.ml_utility:.3f}")
     table.add_row("安全性スコア(S_auto)", f"{result.safety.safety_score_auto:.3f}")
-    table.add_row("  k-匿名性", f"k={result.safety.k_anonymity} (スコア: {result.safety.k_score:.2f})")
-    table.add_row("  l-多様性", f"l={result.safety.l_diversity} (スコア: {result.safety.l_score:.2f})")
-    table.add_row("  t-近接性", f"t={result.safety.t_closeness:.3f} (スコア: {result.safety.t_score:.2f})")
+    k_val = result.safety.k_anonymity
+    k_sc = result.safety.k_score
+    table.add_row("  k-匿名性", f"k={k_val} (スコア: {k_sc:.2f})")
+    l_val = result.safety.l_diversity
+    l_sc = result.safety.l_score
+    table.add_row("  l-多様性", f"l={l_val} (スコア: {l_sc:.2f})")
+    t_val = result.safety.t_closeness
+    t_sc = result.safety.t_score
+    table.add_row("  t-近接性", f"t={t_val:.3f} (スコア: {t_sc:.2f})")
     table.add_row("暫定スコア", f"[bold]{result.anon_score:.3f}[/bold]")
     table.add_row("実行時間", f"{exec_time:.1f}秒")
     table.add_row("レコード数", f"{len(anonymized_df)}")
@@ -142,10 +147,10 @@ def evaluate_reidentify(
     # 再識別の実行
     sys.path.insert(0, str(submission_dir))
     try:
-        from algorithm import reidentify  # type: ignore[import-not-found]
-
         import tempfile
         import time
+
+        from algorithm import reidentify
 
         output_dir = Path(tempfile.mkdtemp())
         output_json = output_dir / "mappings.json"

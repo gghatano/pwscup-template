@@ -72,10 +72,16 @@ class TestEvaluateReidentification:
 class TestCalculateReidScore:
     def test_basic(self) -> None:
         results = [
-            ReidentificationResult(precision=0.5, recall=0.5, f1=0.5,
-                                   difficulty_weighted_score=0, n_predicted=2, n_correct=1, n_total=2),
-            ReidentificationResult(precision=1.0, recall=1.0, f1=1.0,
-                                   difficulty_weighted_score=0, n_predicted=2, n_correct=2, n_total=2),
+            ReidentificationResult(
+                precision=0.5, recall=0.5, f1=0.5,
+                difficulty_weighted_score=0, n_predicted=2,
+                n_correct=1, n_total=2,
+            ),
+            ReidentificationResult(
+                precision=1.0, recall=1.0, f1=1.0,
+                difficulty_weighted_score=0, n_predicted=2,
+                n_correct=2, n_total=2,
+            ),
         ]
         s_auto_values = [0.3, 0.7]
         score = calculate_reid_score(results, s_auto_values)

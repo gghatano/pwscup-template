@@ -88,7 +88,9 @@ def calculate_rankings(
     anon_participants = [
         (i, ts) for i, ts in enumerate(team_scores) if ts.anon_score is not None
     ]
-    anon_participants.sort(key=lambda x: (-x[1].anon_score, x[1].submitted_at or datetime.max))  # type: ignore[arg-type]
+    anon_participants.sort(
+        key=lambda x: (-(x[1].anon_score or 0.0), x[1].submitted_at or datetime.max)
+    )
     for rank, (idx, _) in enumerate(anon_participants, 1):
         team_scores[idx].anon_rank = rank
     # 不参加者は n_teams + 1
@@ -100,7 +102,9 @@ def calculate_rankings(
     reid_participants = [
         (i, ts) for i, ts in enumerate(team_scores) if ts.reid_score is not None
     ]
-    reid_participants.sort(key=lambda x: (-x[1].reid_score, x[1].submitted_at or datetime.max))  # type: ignore[arg-type]
+    reid_participants.sort(
+        key=lambda x: (-(x[1].reid_score or 0.0), x[1].submitted_at or datetime.max)
+    )
     for rank, (idx, _) in enumerate(reid_participants, 1):
         team_scores[idx].reid_rank = rank
     for ts in team_scores:
@@ -112,10 +116,10 @@ def calculate_rankings(
     reid_weight = config.scoring.total.reid_weight
 
     for ts in team_scores:
-        ts.total_score = anon_weight * ts.anon_rank + reid_weight * ts.reid_rank  # type: ignore[operator]
+        ts.total_score = anon_weight * (ts.anon_rank or 0) + reid_weight * (ts.reid_rank or 0)
 
     # 総合順位（total_scoreが小さいほど上位）
-    team_scores.sort(key=lambda x: (x.total_score, x.submitted_at or datetime.max))  # type: ignore[arg-type]
+    team_scores.sort(key=lambda x: (x.total_score or 0.0, x.submitted_at or datetime.max))
     for rank, ts in enumerate(team_scores, 1):
         ts.total_rank = rank
 

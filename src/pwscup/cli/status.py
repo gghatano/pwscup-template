@@ -43,7 +43,7 @@ def status_command(
         elif division == "reidentify":
             div_filter = SubmissionDivision.REIDENTIFY
 
-        submissions = list_submissions(session, team_id=team.id, division=div_filter)  # type: ignore[arg-type]
+        submissions = list_submissions(session, team_id=team.id, division=div_filter)
 
         console.print(f"[bold]=== 提出状況: {team_name} ===[/bold]")
         table = Table(show_header=True)

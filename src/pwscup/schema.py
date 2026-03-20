@@ -86,7 +86,9 @@ def load_schema(path: Path) -> Schema:
     return Schema.model_validate(data)
 
 
-def validate_dataframe(df: pd.DataFrame, schema: Schema, allow_identifier: bool = False) -> list[str]:
+def validate_dataframe(
+    df: pd.DataFrame, schema: Schema, allow_identifier: bool = False,
+) -> list[str]:
     """DataFrameがスキーマに適合するか検証する.
 
     Args:
@@ -145,7 +147,8 @@ def validate_dataframe(df: pd.DataFrame, schema: Schema, allow_identifier: bool 
                 invalid_values = set(series.dropna().unique()) - set(col_def.domain)
                 if invalid_values:
                     errors.append(
-                        f"カラム '{col_def.name}' に不正な値: {sorted(str(v) for v in invalid_values)}"
+                        f"カラム '{col_def.name}' に不正な値: "
+                        f"{sorted(str(v) for v in invalid_values)}"
                     )
 
     return errors

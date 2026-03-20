@@ -1,0 +1,45 @@
+{% if success %}
+<div class="alert alert-success">
+    <strong>評価が完了しました！</strong>
+</div>
+<div class="card">
+    <h2>{{ "匿名化" if division == "anonymize" else "再識別" }}評価結果</h2>
+    <table>
+        <tbody>
+            {% if division == "anonymize" %}
+            <tr><th colspan="2" style="color:var(--primary);padding-top:1rem;">有用性スコア (U)</th></tr>
+            <tr><td style="padding-left:2rem;">分布距離</td><td>{{ "%.4f"|format(distribution_distance) }}</td></tr>
+            <tr><td style="padding-left:2rem;">相関保存</td><td>{{ "%.4f"|format(correlation_preservation) }}</td></tr>
+            <tr><td style="padding-left:2rem;">クエリ精度</td><td>{{ "%.4f"|format(query_accuracy) }}</td></tr>
+            <tr><td style="padding-left:2rem;">ML有用性</td><td>{{ "%.4f"|format(ml_utility) }}</td></tr>
+            <tr><th>有用性 U</th><td class="score">{{ "%.4f"|format(utility_score) }}</td></tr>
+
+            <tr><th colspan="2" style="color:var(--primary);padding-top:1rem;">安全性スコア (S_auto)</th></tr>
+            <tr><td style="padding-left:2rem;">k-匿名性</td><td>k = {{ k_anonymity }}</td></tr>
+            <tr><td style="padding-left:2rem;">l-多様性</td><td>l = {{ l_diversity }}</td></tr>
+            <tr><td style="padding-left:2rem;">t-近接性</td><td>t = {{ "%.4f"|format(t_closeness) }}</td></tr>
+            <tr><th>安全性 S_auto</th><td class="score">{{ "%.4f"|format(safety_score_auto) }}</td></tr>
+
+            <tr style="border-top:2px solid var(--primary);">
+                <th style="font-size:1.1rem;">暫定スコア (U × S_auto)</th>
+                <td class="score good" style="font-size:1.1rem;">{{ "%.4f"|format(anon_score) }}</td>
+            </tr>
+            {% else %}
+            <tr><th colspan="2" style="color:var(--primary);padding-top:1rem;">再識別スコア</th></tr>
+            <tr><td style="padding-left:2rem;">Precision</td><td>{{ "%.4f"|format(precision) }}</td></tr>
+            <tr><td style="padding-left:2rem;">Recall</td><td>{{ "%.4f"|format(recall) }}</td></tr>
+            <tr><td style="padding-left:2rem;">F1</td><td>{{ "%.4f"|format(f1) }}</td></tr>
+            <tr style="border-top:2px solid var(--primary);">
+                <th style="font-size:1.1rem;">難易度加重スコア</th>
+                <td class="score good" style="font-size:1.1rem;">{{ "%.4f"|format(difficulty_weighted_score) }}</td>
+            </tr>
+            {% endif %}
+            <tr><td class="text-muted">実行時間</td><td class="text-muted">{{ "%.1f"|format(execution_time) }}秒</td></tr>
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-error">
+    <strong>エラー:</strong> {{ error }}
+</div>
+{% endif %}

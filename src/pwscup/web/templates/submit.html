@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}提出・評価{% endblock %}
+{% block content %}
+<h1>アルゴリズムの提出・評価</h1>
+<p class="text-muted" style="margin-bottom:1rem;">サンプルアルゴリズムを選んで評価を実行してみましょう。</p>
+
+<div class="card">
+    <h2>評価を実行</h2>
+    <form hx-post="/submit/evaluate" hx-target="#eval-result" hx-indicator="#eval-spinner">
+        <div class="form-group">
+            <label>部門</label>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="division" value="anonymize" checked>
+                    匿名化（守り）
+                </label>
+                <label>
+                    <input type="radio" name="division" value="reidentify">
+                    再識別（攻め）
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="algorithm_dir">アルゴリズム</label>
+            <select name="algorithm_dir" id="algorithm_dir">
+                {% for algo in algorithms %}
+                <option value="{{ algo.path }}">{{ algo.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="team_id">チーム</label>
+            <select name="team_id" id="team_id">
+                {% for team in teams %}
+                <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn">
+            評価を実行
+            <span id="eval-spinner" class="htmx-indicator spinner">&#9696;</span>
+        </button>
+    </form>
+</div>
+
+<div id="eval-result"></div>
+{% endblock %}

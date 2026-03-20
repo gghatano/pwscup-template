@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
+from sqlalchemy import desc
+from sqlmodel import select
+
 from pwscup.db.engine import get_session, init_db
-from pwscup.db.repository import get_rankings, list_submissions
-from pwscup.models.submission import SubmissionDivision
+from pwscup.models.evaluation import AnonymizationEvaluation, ReidentificationEvaluation
+from pwscup.models.submission import Submission, SubmissionDivision
+from pwscup.models.team import Team
 
 console = Console()
 
@@ -29,11 +33,6 @@ def leaderboard_command(
     init_db(db_path)
 
     with get_session(db_path) as session:
-        from sqlmodel import select
-        from pwscup.models.evaluation import AnonymizationEvaluation, ReidentificationEvaluation
-        from pwscup.models.submission import Submission
-        from pwscup.models.team import Team
-
         if division == "anonymize" or division is None:
             console.print("[bold]=== 匿名化部門 ===[/bold]")
             table = Table(show_header=True)
@@ -43,12 +42,15 @@ def leaderboard_command(
             table.add_column("安全性", justify="right")
             table.add_column("スコア", justify="right", style="green")
 
-            stmt = (
+            stmt: Any = (
                 select(Submission, AnonymizationEvaluation, Team)
-                .join(AnonymizationEvaluation, AnonymizationEvaluation.submission_id == Submission.id)
-                .join(Team, Team.id == Submission.team_id)
+                .join(
+                    AnonymizationEvaluation,
+                    AnonymizationEvaluation.submission_id == Submission.id,  # type: ignore[arg-type]
+                )
+                .join(Team, Team.id == Submission.team_id)  # type: ignore[arg-type]
                 .where(Submission.division == SubmissionDivision.ANONYMIZE)
-                .order_by(AnonymizationEvaluation.final_score.desc())  # type: ignore[union-attr]
+                .order_by(desc(AnonymizationEvaluation.final_score))  # type: ignore[arg-type]
             )
             results = session.exec(stmt).all()
 
@@ -74,10 +76,13 @@ def leaderboard_command(
 
             stmt = (
                 select(Submission, ReidentificationEvaluation, Team)
-                .join(ReidentificationEvaluation, ReidentificationEvaluation.submission_id == Submission.id)
-                .join(Team, Team.id == Submission.team_id)
+                .join(
+                    ReidentificationEvaluation,
+                    ReidentificationEvaluation.submission_id == Submission.id,  # type: ignore[arg-type]
+                )
+                .join(Team, Team.id == Submission.team_id)  # type: ignore[arg-type]
                 .where(Submission.division == SubmissionDivision.REIDENTIFY)
-                .order_by(ReidentificationEvaluation.f1.desc())  # type: ignore[union-attr]
+                .order_by(desc(ReidentificationEvaluation.f1))  # type: ignore[arg-type]
             )
             results = session.exec(stmt).all()
 

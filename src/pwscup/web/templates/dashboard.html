@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}ダッシュボード{% endblock %}
+{% block content %}
+<h1>PWSCUP データ匿名化・再識別コンテスト</h1>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+    <div class="card">
+        <h2>匿名化部門（守り）</h2>
+        <p>生データを匿名化し、<strong>有用性</strong>を保ちつつ個人を特定できないデータを生成します。</p>
+        <p class="text-muted mt-1">スコア = 有用性 U × 安全性 S</p>
+    </div>
+    <div class="card">
+        <h2>再識別部門（攻め）</h2>
+        <p>匿名化されたデータに対して攻撃し、元データとの<strong>対応関係</strong>を復元します。</p>
+        <p class="text-muted mt-1">スコア = Precision × Recall × 難易度加重</p>
+    </div>
+    <div class="card">
+        <h2>スコアリングの仕組み</h2>
+        <p>匿名化スコアは<strong>有用性 × 安全性</strong>の積。片方を犠牲にすると0点になる設計です。</p>
+        <p class="text-muted mt-1">トレードオフの最適化が鍵</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2>リーダーボード（上位5件）</h2>
+    {% if leaderboard %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>チーム</th>
+                <th>部門</th>
+                <th>スコア</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in leaderboard %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ entry.team_name }}</td>
+                <td>{{ "匿名化" if entry.division == "anonymize" else "再識別" }}</td>
+                <td class="score good">{{ "%.4f"|format(entry.score) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">まだ提出がありません。「提出・評価」ページから試してみましょう！</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div style="display:flex; gap:1rem;">
+        <a href="/submit" class="btn">評価を試す →</a>
+        <a href="/leaderboard" class="btn" style="background:#475569;">リーダーボードを見る →</a>
+    </div>
+</div>
+{% endblock %}

@@ -44,11 +44,11 @@ def evaluate_safety(
     sa_cols = [c for c in schema.sensitive_attributes if c in anonymized_df.columns]
 
     k = compute_k_anonymity(anonymized_df, qi_cols)
-    l = compute_l_diversity(anonymized_df, qi_cols, sa_cols) if sa_cols else 0
+    l_val = compute_l_diversity(anonymized_df, qi_cols, sa_cols) if sa_cols else 0
     t = compute_t_closeness(anonymized_df, qi_cols, sa_cols) if sa_cols else 0.0
 
     k_score = _normalize_k(k)
-    l_score = _normalize_l(l)
+    l_score = _normalize_l(l_val)
     t_score = _normalize_t(t)
 
     s_auto = (k_score + l_score + t_score) / 3.0
@@ -57,7 +57,7 @@ def evaluate_safety(
         safety_score_auto=float(np.clip(s_auto, 0.0, 1.0)),
         k_anonymity=k,
         k_score=k_score,
-        l_diversity=l,
+        l_diversity=l_val,
         l_score=l_score,
         t_closeness=t,
         t_score=t_score,
@@ -120,11 +120,10 @@ def compute_l_diversity(
     if not qi_cols or not sa_cols or len(df) == 0:
         return 0
 
-    qi_data = df[qi_cols].astype(str)
     min_l = len(df)  # 初期値を最大に
 
     for sa_col in sa_cols:
-        grouped = df.groupby(list(qi_data.columns))[sa_col]
+        grouped = df.groupby(qi_cols)[sa_col]
         for _, group in grouped:
             n_unique = group.nunique()
             min_l = min(min_l, n_unique)
@@ -155,8 +154,7 @@ def compute_t_closeness(
     for sa_col in sa_cols:
         global_dist = df[sa_col]
 
-        qi_data = df[qi_cols].astype(str)
-        grouped = df.groupby(list(qi_data.columns))[sa_col]
+        grouped = df.groupby(qi_cols)[sa_col]
 
         for _, group in grouped:
             if len(group) < 2:
@@ -192,9 +190,9 @@ def _normalize_k(k: int) -> float:
     return float(np.clip(k / 10.0, 0.0, 1.0))
 
 
-def _normalize_l(l: int) -> float:
+def _normalize_l(l_val: int) -> float:
     """l値を0〜1のスコアに変換. l=5以上で1.0."""
-    return float(np.clip(l / 5.0, 0.0, 1.0))
+    return float(np.clip(l_val / 5.0, 0.0, 1.0))
 
 
 def _normalize_t(t: float) -> float:
