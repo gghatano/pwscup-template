@@ -242,7 +242,17 @@ async def evaluate(
     """Execute evaluation (HTMX endpoint)."""
     session = _get_session()
     try:
-        algo_path = Path(algorithm_dir)
+        algo_path = Path(algorithm_dir).resolve()
+        # Validate that algorithm_dir is within EXAMPLES_DIR to prevent path traversal
+        if not algo_path.is_relative_to(EXAMPLES_DIR.resolve()):
+            return templates.TemplateResponse(
+                "_partials/eval_result.html",
+                {
+                    "request": request,
+                    "success": False,
+                    "error": "不正なアルゴリズムディレクトリが指定されました",
+                },
+            )
         config = load_contest_config(CONFIG_PATH if CONFIG_PATH.exists() else None)
 
         if division == "anonymize":

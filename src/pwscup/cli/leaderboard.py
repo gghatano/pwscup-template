@@ -9,8 +9,13 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from sqlalchemy import desc
+from sqlmodel import select
+
 from pwscup.db.engine import get_session, init_db
-from pwscup.models.submission import SubmissionDivision
+from pwscup.models.evaluation import AnonymizationEvaluation, ReidentificationEvaluation
+from pwscup.models.submission import Submission, SubmissionDivision
+from pwscup.models.team import Team
 
 console = Console()
 
@@ -28,13 +33,6 @@ def leaderboard_command(
     init_db(db_path)
 
     with get_session(db_path) as session:
-        from sqlalchemy import desc
-        from sqlmodel import select
-
-        from pwscup.models.evaluation import AnonymizationEvaluation, ReidentificationEvaluation
-        from pwscup.models.submission import Submission
-        from pwscup.models.team import Team
-
         if division == "anonymize" or division is None:
             console.print("[bold]=== 匿名化部門 ===[/bold]")
             table = Table(show_header=True)
