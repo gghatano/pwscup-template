@@ -2,11 +2,13 @@
 {% block title %}提出・評価{% endblock %}
 {% block content %}
 <h1>アルゴリズムの提出・評価</h1>
-<p class="text-muted" style="margin-bottom:1rem;">サンプルアルゴリズムを選んで評価を実行してみましょう。</p>
+<p class="text-muted" style="margin-bottom:1rem;">ファイルをアップロードするか、サンプルアルゴリズムを選んで評価を実行できます。</p>
 
+<!-- ファイルアップロード -->
 <div class="card">
-    <h2>評価を実行</h2>
-    <form hx-post="/submit/evaluate" hx-target="#eval-result" hx-indicator="#eval-spinner">
+    <h2>ファイルアップロードで提出</h2>
+    <form hx-post="/submit/evaluate" hx-target="#eval-result" hx-indicator="#eval-spinner-upload"
+          hx-encoding="multipart/form-data">
         <div class="form-group">
             <label>部門</label>
             <div class="radio-group">
@@ -22,26 +24,57 @@
         </div>
 
         <div class="form-group">
-            <label for="algorithm_dir">アルゴリズム</label>
-            <select name="algorithm_dir" id="algorithm_dir">
-                {% for algo in algorithms %}
+            <label for="upload_file">アルゴリズムファイル (.py)</label>
+            <input type="file" name="upload_file" id="upload_file" accept=".py" required>
+            <p class="text-muted" style="font-size:0.85rem; margin-top:0.3rem;">
+                匿名化: <code>def anonymize(input_csv_path, schema_path, output_csv_path)</code> を定義<br>
+                再識別: <code>def reidentify(anon_csv_path, auxiliary_csv_path, schema_path, output_json_path)</code> を定義
+            </p>
+        </div>
+
+        <button type="submit" class="btn">
+            アップロードして評価
+            <span id="eval-spinner-upload" class="htmx-indicator spinner">&#9696;</span>
+        </button>
+    </form>
+</div>
+
+<!-- サンプルアルゴリズム: 匿名化 -->
+<div class="card">
+    <h2>匿名化サンプルで評価</h2>
+    <form hx-post="/submit/evaluate" hx-target="#eval-result" hx-indicator="#eval-spinner-anon">
+        <input type="hidden" name="division" value="anonymize">
+        <div class="form-group">
+            <label for="algorithm_dir_anon">匿名化アルゴリズム（anonymize_*）</label>
+            <select name="algorithm_dir" id="algorithm_dir_anon">
+                {% for algo in anonymize_algorithms %}
                 <option value="{{ algo.path }}">{{ algo.name }}</option>
                 {% endfor %}
             </select>
         </div>
+        <button type="submit" class="btn">
+            匿名化を評価
+            <span id="eval-spinner-anon" class="htmx-indicator spinner">&#9696;</span>
+        </button>
+    </form>
+</div>
 
+<!-- サンプルアルゴリズム: 攻撃 -->
+<div class="card">
+    <h2>攻撃サンプルで評価</h2>
+    <form hx-post="/submit/evaluate" hx-target="#eval-result" hx-indicator="#eval-spinner-atk">
+        <input type="hidden" name="division" value="reidentify">
         <div class="form-group">
-            <label for="team_id">チーム</label>
-            <select name="team_id" id="team_id">
-                {% for team in teams %}
-                <option value="{{ team.id }}">{{ team.name }}</option>
+            <label for="algorithm_dir_atk">攻撃アルゴリズム（attack_*）</label>
+            <select name="algorithm_dir" id="algorithm_dir_atk">
+                {% for algo in attack_algorithms %}
+                <option value="{{ algo.path }}">{{ algo.name }}</option>
                 {% endfor %}
             </select>
         </div>
-
         <button type="submit" class="btn">
-            評価を実行
-            <span id="eval-spinner" class="htmx-indicator spinner">&#9696;</span>
+            攻撃を評価
+            <span id="eval-spinner-atk" class="htmx-indicator spinner">&#9696;</span>
         </button>
     </form>
 </div>

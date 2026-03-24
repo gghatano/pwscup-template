@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}管理者設定{% endblock %}
+{% block content %}
+<h1>管理者設定</h1>
+
+{% if saved %}
+<div class="alert alert-success" style="margin-bottom:1rem;">設定を保存しました。</div>
+{% endif %}
+
+<div class="card">
+    <h2>安全性評価の設定</h2>
+    <form method="post" action="/admin/settings">
+        <div class="form-group">
+            <label>安全性評価モード</label>
+            <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:0.5rem;">
+                <label style="display:flex; align-items:flex-start; gap:0.5rem; font-weight:normal;">
+                    <input type="radio" name="safety_mode" value="reid_top3"
+                           {% if settings.safety_mode == "reid_top3" %}checked{% endif %}
+                           style="margin-top:0.3rem;">
+                    <div>
+                        <strong>再識別ベース（推奨）</strong><br>
+                        <span class="text-muted" style="font-size:0.85rem;">
+                            サンプル再識別アルゴリズム + 他チームの攻撃結果のtop3平均で安全性を評価。<br>
+                            安全性 = 1 - avg(top3 F1)。k/l/t は不使用。
+                        </span>
+                    </div>
+                </label>
+                <label style="display:flex; align-items:flex-start; gap:0.5rem; font-weight:normal;">
+                    <input type="radio" name="safety_mode" value="static_metrics"
+                           {% if settings.safety_mode == "static_metrics" %}checked{% endif %}
+                           style="margin-top:0.3rem;">
+                    <div>
+                        <strong>静的メトリクス</strong><br>
+                        <span class="text-muted" style="font-size:0.85rem;">
+                            k-匿名性・l-多様性・t-近接性の平均で安全性を評価（従来方式）。
+                        </span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="baseline_attack">ベースライン攻撃アルゴリズム</label>
+            <select name="baseline_attack" id="baseline_attack">
+                <option value="attack_baseline" {% if settings.baseline_attack == "attack_baseline" %}selected{% endif %}>attack_baseline</option>
+                <option value="attack_enhanced" {% if settings.baseline_attack == "attack_enhanced" %}selected{% endif %}>attack_enhanced</option>
+                <option value="attack_strict" {% if settings.baseline_attack == "attack_strict" %}selected{% endif %}>attack_strict</option>
+            </select>
+            <p class="text-muted" style="font-size:0.85rem; margin-top:0.3rem;">
+                匿名化提出時に自動実行するベースライン攻撃を選択
+            </p>
+        </div>
+
+        <button type="submit" class="btn">設定を保存</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>現在の設定</h2>
+    <table>
+        <tbody>
+            <tr><td>安全性評価モード</td><td><strong>{{ "再識別ベース (top3平均)" if settings.safety_mode == "reid_top3" else "静的メトリクス (k/l/t)" }}</strong></td></tr>
+            <tr><td>ベースライン攻撃</td><td><code>{{ settings.baseline_attack }}</code></td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

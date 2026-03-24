@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Column, Field, SQLModel, Text
 
 
 class AnonymizationEvaluation(SQLModel, table=True):
@@ -33,6 +33,10 @@ class AnonymizationEvaluation(SQLModel, table=True):
 
     # 最終スコア
     final_score: Optional[float] = Field(default=None)
+
+    # プラガブルメトリクス詳細（JSON）
+    utility_details: Optional[str] = Field(default=None, sa_column=Column(Text))
+    safety_details: Optional[str] = Field(default=None, sa_column=Column(Text))
 
 
 class ReidentificationEvaluation(SQLModel, table=True):

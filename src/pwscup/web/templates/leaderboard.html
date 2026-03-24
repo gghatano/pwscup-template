@@ -13,9 +13,19 @@
            hx-get="/leaderboard/reidentify" hx-target="#leaderboard-content"
            hx-push-url="false"
            onclick="document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">再識別部門</a>
+        <a class="tab {% if active_division == 'total' %}active{% endif %}"
+           hx-get="/leaderboard/total" hx-target="#leaderboard-content"
+           hx-push-url="false"
+           onclick="document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">総合</a>
     </div>
     <div id="leaderboard-content">
         {% include "_partials/leaderboard_table.html" %}
     </div>
+</div>
+
+<div class="card">
+    <h2>総合スコアの計算方法</h2>
+    <p>総合ポイント = <code>50 / 匿名化順位 + 50 / 再識別順位</code></p>
+    <p class="text-muted mt-1">両部門1位の場合: 50 + 50 = 100 ポイント。片方のみ参加の場合はその部門のポイントのみ加算されます。</p>
 </div>
 {% endblock %}

@@ -13,6 +13,61 @@ scoring:
   total:
     anon_weight: 0.5
     reid_weight: 0.5
+  metrics:
+    utility:
+      distribution_distance:
+        enabled: true
+        weight: 0.3
+      correlation_preservation:
+        enabled: true
+        weight: 0.3
+      query_accuracy:
+        enabled: true
+        weight: 0.2
+      ml_utility:
+        enabled: true
+        weight: 0.2
+      information_loss:
+        enabled: false
+        weight: 0.2
+      range_coverage:
+        enabled: false
+        weight: 0.2
+      outlier_preservation:
+        enabled: false
+        weight: 0.2
+    safety:
+      k_anonymity:
+        enabled: true
+        weight: 1.0
+      l_diversity:
+        enabled: true
+        weight: 1.0
+      t_closeness:
+        enabled: true
+        weight: 1.0
+      record_linkage_risk:
+        enabled: false
+        weight: 1.0
+      uniqueness_ratio:
+        enabled: false
+        weight: 1.0
+      attribute_disclosure:
+        enabled: false
+        weight: 1.0
+      delta_disclosure:
+        enabled: false
+        weight: 1.0
+      beta_likeness:
+        enabled: false
+        weight: 1.0
+      differential_privacy:
+        enabled: false
+        weight: 1.0
+      skewness_attack:
+        enabled: false
+        weight: 1.0
+    normalize_weights: true
 
 constraints:
   min_k_anonymity: 2

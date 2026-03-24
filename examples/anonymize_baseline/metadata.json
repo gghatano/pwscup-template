@@ -1,0 +1,5 @@
+{
+  "team": "baseline",
+  "division": "anonymize",
+  "description": "基本的な汎化+ノイズによるベースライン匿名化"
+}

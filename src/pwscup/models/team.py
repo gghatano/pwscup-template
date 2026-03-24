@@ -24,4 +24,5 @@ class Team(SQLModel, table=True):
     name: str = Field(index=True, unique=True)
     members: str = Field(default="[]")  # JSON文字列
     division: Division = Field(default=Division.BOTH)
+    password_hash: str = Field(default="")
     created_at: datetime = Field(default_factory=datetime.utcnow)

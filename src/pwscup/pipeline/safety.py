@@ -1,6 +1,7 @@
-"""安全性評価モジュール（静的評価: S_auto）.
+"""安全性評価モジュール（後方互換シム）.
 
 k-匿名性、l-多様性、t-近接性を計算する。
+内部ではMetricRunnerに委譲する。
 """
 
 from __future__ import annotations
@@ -11,6 +12,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from pwscup.pipeline.metrics.registry import build_default_registry
+from pwscup.pipeline.metrics.runner import MetricRunner
 from pwscup.schema import Schema
 
 
@@ -40,27 +43,36 @@ def evaluate_safety(
     Returns:
         安全性評価結果
     """
-    qi_cols = [c for c in schema.quasi_identifiers if c in anonymized_df.columns]
-    sa_cols = [c for c in schema.sensitive_attributes if c in anonymized_df.columns]
+    registry = build_default_registry()
 
-    k = compute_k_anonymity(anonymized_df, qi_cols)
-    l_val = compute_l_diversity(anonymized_df, qi_cols, sa_cols) if sa_cols else 0
-    t = compute_t_closeness(anonymized_df, qi_cols, sa_cols) if sa_cols else 0.0
+    metrics_config = {
+        "safety": {
+            "k_anonymity": {"enabled": True, "weight": 1.0},
+            "l_diversity": {"enabled": True, "weight": 1.0},
+            "t_closeness": {"enabled": True, "weight": 1.0},
+        }
+    }
 
-    k_score = _normalize_k(k)
-    l_score = _normalize_l(l_val)
-    t_score = _normalize_t(t)
+    runner = MetricRunner(
+        registry=registry,
+        metrics_config=metrics_config,
+        normalize_weights=True,
+    )
 
-    s_auto = (k_score + l_score + t_score) / 3.0
+    result = runner.run_safety(anonymized_df, schema)
+
+    k_result = result.metric_results.get("k_anonymity")
+    l_result = result.metric_results.get("l_diversity")
+    t_result = result.metric_results.get("t_closeness")
 
     return SafetyResult(
-        safety_score_auto=float(np.clip(s_auto, 0.0, 1.0)),
-        k_anonymity=k,
-        k_score=k_score,
-        l_diversity=l_val,
-        l_score=l_score,
-        t_closeness=t,
-        t_score=t_score,
+        safety_score_auto=float(np.clip(result.score, 0.0, 1.0)),
+        k_anonymity=int(k_result.raw_value) if k_result else 0,
+        k_score=k_result.score if k_result else 0.0,
+        l_diversity=int(l_result.raw_value) if l_result else 0,
+        l_score=l_result.score if l_result else 0.0,
+        t_closeness=float(t_result.raw_value) if t_result else 0.0,
+        t_score=t_result.score if t_result else 0.0,
     )
 
 
@@ -97,8 +109,6 @@ def compute_k_anonymity(df: pd.DataFrame, qi_cols: list[str]) -> int:
     if not qi_cols or len(df) == 0:
         return 0
 
-    # 準識別子の組み合わせでグループ化
-    # 文字列に変換して結合（汎化後のデータにも対応）
     qi_data = df[qi_cols].astype(str)
     group_sizes = qi_data.groupby(qi_cols).size()
     return int(group_sizes.min())
@@ -120,7 +130,7 @@ def compute_l_diversity(
     if not qi_cols or not sa_cols or len(df) == 0:
         return 0
 
-    min_l = len(df)  # 初期値を最大に
+    min_l = len(df)
 
     for sa_col in sa_cols:
         grouped = df.groupby(qi_cols)[sa_col]
@@ -153,7 +163,6 @@ def compute_t_closeness(
 
     for sa_col in sa_cols:
         global_dist = df[sa_col]
-
         grouped = df.groupby(qi_cols)[sa_col]
 
         for _, group in grouped:
@@ -171,7 +180,6 @@ def compute_t_closeness(
                 except (ValueError, TypeError):
                     normalized_emd = 0.0
             else:
-                # カテゴリの場合: TVDを使用
                 global_counts = global_dist.value_counts(normalize=True)
                 group_counts = group.value_counts(normalize=True)
                 all_vals = set(global_counts.index) | set(group_counts.index)
@@ -183,18 +191,3 @@ def compute_t_closeness(
             max_t = max(max_t, normalized_emd)
 
     return float(max_t)
-
-
-def _normalize_k(k: int) -> float:
-    """k値を0〜1のスコアに変換. k=10以上で1.0."""
-    return float(np.clip(k / 10.0, 0.0, 1.0))
-
-
-def _normalize_l(l_val: int) -> float:
-    """l値を0〜1のスコアに変換. l=5以上で1.0."""
-    return float(np.clip(l_val / 5.0, 0.0, 1.0))
-
-
-def _normalize_t(t: float) -> float:
-    """t値を0〜1のスコアに変換. tが小さいほど安全."""
-    return float(np.clip(1.0 - t, 0.0, 1.0))

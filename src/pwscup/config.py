@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class UtilityWeights(BaseModel):
-    """有用性評価の重み."""
+    """有用性評価の重み（レガシー互換）."""
 
     distribution_distance: float = 0.3
     correlation_preservation: float = 0.3
@@ -39,12 +39,54 @@ class TotalWeights(BaseModel):
     reid_weight: float = 0.5
 
 
+class MetricConfig(BaseModel):
+    """個別メトリクスの設定."""
+
+    enabled: bool = True
+    weight: float = 1.0
+
+
+class MetricsConfig(BaseModel):
+    """メトリクス設定."""
+
+    utility: dict[str, MetricConfig] = {}
+    safety: dict[str, MetricConfig] = {}
+    normalize_weights: bool = True
+
+
 class ScoringConfig(BaseModel):
     """スコアリング設定."""
 
     utility_weights: UtilityWeights = UtilityWeights()
     safety: SafetyWeights = SafetyWeights()
     total: TotalWeights = TotalWeights()
+    metrics: MetricsConfig = MetricsConfig()
+
+    @model_validator(mode="after")
+    def convert_legacy_weights(self) -> "ScoringConfig":
+        """旧UtilityWeights形式をMetricsConfigに自動変換する."""
+        if not self.metrics.utility:
+            self.metrics.utility = {
+                "distribution_distance": MetricConfig(
+                    enabled=True, weight=self.utility_weights.distribution_distance
+                ),
+                "correlation_preservation": MetricConfig(
+                    enabled=True, weight=self.utility_weights.correlation_preservation
+                ),
+                "query_accuracy": MetricConfig(
+                    enabled=True, weight=self.utility_weights.query_accuracy
+                ),
+                "ml_utility": MetricConfig(
+                    enabled=True, weight=self.utility_weights.ml_utility
+                ),
+            }
+        if not self.metrics.safety:
+            self.metrics.safety = {
+                "k_anonymity": MetricConfig(enabled=True, weight=1.0),
+                "l_diversity": MetricConfig(enabled=True, weight=1.0),
+                "t_closeness": MetricConfig(enabled=True, weight=1.0),
+            }
+        return self
 
 
 class ResourceConstraints(BaseModel):

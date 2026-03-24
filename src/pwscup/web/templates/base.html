@@ -35,6 +35,9 @@
         nav a { color: white; text-decoration: none; opacity: 0.85; }
         nav a:hover { opacity: 1; }
         nav .brand { font-weight: bold; font-size: 1.2rem; opacity: 1; }
+        nav .nav-right { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+        nav .nav-right .team-name { font-size: 0.85rem; opacity: 0.9; }
+        nav .nav-right a { font-size: 0.85rem; }
         .container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
         .card {
             background: var(--card-bg);
@@ -55,16 +58,23 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-block;
         }
         .btn:hover { background: var(--primary-dark); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
-        .form-group select, .form-group input {
+        .form-group select, .form-group input[type="text"], .form-group input[type="password"] {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid var(--border);
             border-radius: 4px;
+            font-size: 0.95rem;
+        }
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
             font-size: 0.95rem;
         }
         .radio-group { display: flex; gap: 1.5rem; }
@@ -102,6 +112,16 @@
         <a href="/submit">提出・評価</a>
         <a href="/leaderboard">リーダーボード</a>
         <a href="/history">提出履歴</a>
+        <div class="nav-right">
+            <a href="/tutorial" style="opacity:0.7; font-size:0.85rem;">チュートリアル</a>
+            <a href="/admin" style="opacity:0.5; font-size:0.8rem;">管理</a>
+            {% if logged_in_team %}
+            <span class="team-name">{{ logged_in_team.name }}</span>
+            <a href="/logout" style="opacity:0.7;">ログアウト</a>
+            {% else %}
+            <a href="/login">ログイン</a>
+            {% endif %}
+        </div>
     </nav>
     <div class="container">
         {% block content %}{% endblock %}

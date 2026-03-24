@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+{% block title %}チュートリアル{% endblock %}
+{% block content %}
+<style>
+    .tutorial-progress {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        align-items: center;
+    }
+    .tutorial-progress .dot {
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        background: var(--border);
+        transition: background 0.3s;
+        cursor: pointer;
+    }
+    .tutorial-progress .dot.active { background: var(--primary); }
+    .tutorial-progress .dot.done { background: var(--success); }
+    .tutorial-progress .step-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-left: 0.5rem;
+    }
+    .tutorial-step { display: none; }
+    .tutorial-step.active { display: block; }
+    .tutorial-step h2 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .tutorial-step h2 .step-badge {
+        background: var(--primary);
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        white-space: nowrap;
+    }
+    .tutorial-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+    }
+    .tutorial-actions .right { display: flex; gap: 0.5rem; }
+    .btn-outline {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+    .btn-outline:hover { background: var(--bg); color: var(--text); }
+    .btn-success { background: var(--success); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
+    .btn-success:hover { opacity: 0.9; }
+    .concept-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    @media (max-width: 600px) { .concept-grid { grid-template-columns: 1fr; } }
+    .concept-card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem;
+    }
+    .concept-card h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+    .concept-card p { font-size: 0.9rem; color: var(--text-muted); }
+    .code-block {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 1rem;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        overflow-x: auto;
+        margin: 0.75rem 0;
+        line-height: 1.5;
+    }
+    .highlight-box {
+        background: #eff6ff;
+        border-left: 4px solid var(--primary);
+        padding: 0.75rem 1rem;
+        border-radius: 0 6px 6px 0;
+        margin: 0.75rem 0;
+        font-size: 0.95rem;
+    }
+    .data-table { font-size: 0.85rem; margin: 0.75rem 0; }
+    .data-table th { background: var(--bg); }
+    .role-tag {
+        display: inline-block;
+        font-size: 0.75rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+    .role-id { background: #fee2e2; color: #991b1b; }
+    .role-qi { background: #fef3c7; color: #92400e; }
+    .role-sa { background: #fce7f3; color: #9d174d; }
+    .role-ns { background: #e0f2fe; color: #075985; }
+    .score-formula {
+        text-align: center;
+        font-size: 1.3rem;
+        font-weight: bold;
+        padding: 1rem;
+        background: var(--bg);
+        border-radius: 6px;
+        margin: 0.75rem 0;
+    }
+    .try-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    .try-button:hover { background: var(--primary-dark); }
+</style>
+
+<div class="tutorial-progress" id="progress">
+    <span class="step-label" id="step-label">Step 1 / 6</span>
+</div>
+
+<!-- Step 1: コンテスト概要 -->
+<div class="tutorial-step active" data-step="0">
+    <div class="card">
+        <h2><span class="step-badge">Step 1 / 6</span> コンテストの仕組み</h2>
+        <p>PWSCUP は<strong>データのプライバシー保護</strong>をテーマにしたコンテストです。2つの部門で攻防戦を行います。</p>
+
+        <div class="concept-grid">
+            <div class="concept-card">
+                <h3>匿名化部門（守り）</h3>
+                <p>個人データを匿名化して、<strong>使えるデータ</strong>を保ちつつ<strong>個人を特定できない</strong>ようにする</p>
+            </div>
+            <div class="concept-card">
+                <h3>再識別部門（攻め）</h3>
+                <p>匿名化されたデータと補助知識を使い、<strong>元の個人を特定</strong>する</p>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <strong>ポイント:</strong> 匿名化スコアは <code>有用性 U × 安全性 S</code> の積。片方が0なら全体が0になるため、バランスが重要です。
+        </div>
+
+        <div class="score-formula">匿名化スコア = U（有用性）× S（安全性）</div>
+    </div>
+</div>
+
+<!-- Step 2: データの理解 -->
+<div class="tutorial-step" data-step="1">
+    <div class="card">
+        <h2><span class="step-badge">Step 2 / 6</span> データの構造を理解する</h2>
+        <p>コンテストで扱うデータには、カラムごとに<strong>役割</strong>があります:</p>
+
+        <table class="data-table">
+            <thead>
+                <tr><th>カラム</th><th>役割</th><th>説明</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>id</code></td><td><span class="role-tag role-id">識別子</span></td><td>個人ID。匿名化時に必ず削除</td></tr>
+                <tr><td><code>age</code></td><td><span class="role-tag role-qi">準識別子</span></td><td>年齢（18-90）</td></tr>
+                <tr><td><code>gender</code></td><td><span class="role-tag role-qi">準識別子</span></td><td>性別（M / F / Other）</td></tr>
+                <tr><td><code>zipcode</code></td><td><span class="role-tag role-qi">準識別子</span></td><td>郵便番号</td></tr>
+                <tr><td><code>occupation</code></td><td><span class="role-tag role-qi">準識別子</span></td><td>職業（20種類）</td></tr>
+                <tr><td><code>education</code></td><td><span class="role-tag role-qi">準識別子</span></td><td>学歴（5段階）</td></tr>
+                <tr><td><code>disease</code></td><td><span class="role-tag role-sa">機微属性</span></td><td>疾患名 — 保護対象</td></tr>
+                <tr><td><code>salary</code></td><td><span class="role-tag role-sa">機微属性</span></td><td>年収 — 保護対象</td></tr>
+                <tr><td><code>hobby</code></td><td><span class="role-tag role-ns">非機微</span></td><td>趣味</td></tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            <strong>準識別子</strong>は単独では個人を特定できませんが、組み合わせると手がかりになります。例:「30歳・男性・新宿区」→ 数人に絞れてしまう
+        </div>
+    </div>
+</div>
+
+<!-- Step 3: スコアの仕組み -->
+<div class="tutorial-step" data-step="2">
+    <div class="card">
+        <h2><span class="step-badge">Step 3 / 6</span> スコアの仕組み</h2>
+
+        <h3 style="margin: 1rem 0 0.5rem;">有用性スコア U</h3>
+        <p>匿名化データがどれだけ「使える」かを4つの指標で評価します:</p>
+        <table class="data-table">
+            <thead><tr><th>指標</th><th>重み</th><th>内容</th></tr></thead>
+            <tbody>
+                <tr><td>分布距離</td><td>0.3</td><td>元データとの分布の一致度</td></tr>
+                <tr><td>相関保存</td><td>0.3</td><td>カラム間の相関がどれだけ残っているか</td></tr>
+                <tr><td>クエリ精度</td><td>0.2</td><td>集計クエリの結果がどれだけ正確か</td></tr>
+                <tr><td>ML有用性</td><td>0.2</td><td>機械学習モデルの性能がどれだけ維持されるか</td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin: 1rem 0 0.5rem;">安全性スコア S<sub>auto</sub></h3>
+        <p>データがどれだけ安全かを3つのプライバシー指標の平均で評価:</p>
+        <table class="data-table">
+            <thead><tr><th>指標</th><th>内容</th></tr></thead>
+            <tbody>
+                <tr><td>k-匿名性</td><td>同じ準識別子の組が最低 k 件あるか（k が大きいほど安全）</td></tr>
+                <tr><td>l-多様性</td><td>同じグループ内の機微属性が l 種類以上あるか</td></tr>
+                <tr><td>t-近接性</td><td>各グループの機微属性分布が全体分布と近いか</td></tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            <strong>トレードオフ:</strong> 匿名化を強くすると安全性は上がるが有用性が下がる。弱すぎると安全性が0に。<strong>ちょうどいいバランス</strong>が高得点の鍵です。
+        </div>
+    </div>
+</div>
+
+<!-- Step 4: 匿名化を試す -->
+<div class="tutorial-step" data-step="3">
+    <div class="card">
+        <h2><span class="step-badge">Step 4 / 6</span> 匿名化を試してみよう</h2>
+        <p>実際にベースラインの匿名化アルゴリズムを実行して、結果を見てみましょう。</p>
+
+        <h3 style="margin: 1rem 0 0.5rem;">ベースラインの仕組み</h3>
+        <p><code>examples/anonymize_example/</code> に実装されたアルゴリズムは以下を行います:</p>
+        <ol style="margin: 0.5rem 0 0.5rem 1.5rem; font-size: 0.95rem;">
+            <li>識別子 (id) の削除</li>
+            <li>数値QI (age) の汎化（年齢を丸める）</li>
+            <li>カテゴリQI の汎化（郵便番号を粗くする等）</li>
+            <li>数値SA (salary) へのノイズ付加</li>
+            <li>k &lt; 2 のレコードを削除</li>
+        </ol>
+
+        <h3 style="margin: 1rem 0 0.5rem;">Web UIで実行する手順</h3>
+        <ol style="margin: 0.5rem 0 0.5rem 1.5rem; font-size: 0.95rem;">
+            <li>上部メニューの「<strong>提出・評価</strong>」をクリック</li>
+            <li>部門で「<strong>匿名化（守り）</strong>」を選択</li>
+            <li>アルゴリズムで「<strong>anonymize_example</strong>」を選択</li>
+            <li>チームを選んで「<strong>評価を実行</strong>」ボタンを押す</li>
+        </ol>
+
+        <div class="highlight-box">
+            <strong>期待される結果:</strong> 有用性 U ≈ 0.90（高い）、安全性 S ≈ 0.15（低い）。安全性が低いためスコアは伸びません。これが U × S 設計の狙いです。
+        </div>
+
+        <a href="/submit" class="try-button">提出・評価ページで試す →</a>
+    </div>
+</div>
+
+<!-- Step 5: 再識別を試す -->
+<div class="tutorial-step" data-step="4">
+    <div class="card">
+        <h2><span class="step-badge">Step 5 / 6</span> 再識別を試してみよう</h2>
+        <p>次は攻撃者の立場で、匿名化データから元の個人を特定してみましょう。</p>
+
+        <h3 style="margin: 1rem 0 0.5rem;">ベースラインの仕組み</h3>
+        <p><code>examples/reidentify_example/</code> のアルゴリズムは<strong>最近傍マッチング</strong>を行います:</p>
+        <ol style="margin: 0.5rem 0 0.5rem 1.5rem; font-size: 0.95rem;">
+            <li>補助知識（外部から入手可能な情報）を読み込む</li>
+            <li>匿名化データの各レコードと補助知識のレコードを準識別子で比較</li>
+            <li>最も「距離」が近い組み合わせを「同一人物」と判定</li>
+        </ol>
+
+        <h3 style="margin: 1rem 0 0.5rem;">Web UIで実行する手順</h3>
+        <ol style="margin: 0.5rem 0 0.5rem 1.5rem; font-size: 0.95rem;">
+            <li>「<strong>提出・評価</strong>」ページへ移動</li>
+            <li>部門で「<strong>再識別（攻め）</strong>」を選択</li>
+            <li>アルゴリズムで「<strong>reidentify_example</strong>」を選択</li>
+            <li>チームを選んで「<strong>評価を実行</strong>」ボタンを押す</li>
+        </ol>
+
+        <div class="highlight-box">
+            <strong>期待される結果:</strong> Precision ≈ 0.01（ほぼ当たらない）。ベースラインは単純なため改善の余地が大きいです。
+        </div>
+
+        <a href="/submit" class="try-button">提出・評価ページで試す →</a>
+    </div>
+</div>
+
+<!-- Step 6: 次のステップ -->
+<div class="tutorial-step" data-step="5">
+    <div class="card">
+        <h2><span class="step-badge">Step 6 / 6</span> 次のステップ</h2>
+        <p>ベースラインの結果を確認したら、スコアの改善に挑戦してみましょう！</p>
+
+        <h3 style="margin: 1rem 0 0.5rem;">匿名化の改善ヒント</h3>
+        <div class="concept-grid">
+            <div class="concept-card">
+                <h3>汎化の粒度を調整</h3>
+                <p>年齢の丸め方を粗くすると k-匿名性が上がるが、有用性が下がるトレードオフ</p>
+            </div>
+            <div class="concept-card">
+                <h3>ノイズの大きさを調整</h3>
+                <p>salary へのラプラスノイズの scale を変えてバランスを探る</p>
+            </div>
+        </div>
+
+        <h3 style="margin: 1rem 0 0.5rem;">再識別の改善ヒント</h3>
+        <div class="concept-grid">
+            <div class="concept-card">
+                <h3>機微属性も活用</h3>
+                <p>QI だけでなく disease, salary, hobby も手がかりに使う</p>
+            </div>
+            <div class="concept-card">
+                <h3>確信度でフィルタ</h3>
+                <p>距離が遠い候補は予測しない → Precision 向上</p>
+            </div>
+        </div>
+
+        <h3 style="margin: 1rem 0 0.5rem;">画面の使い方</h3>
+        <table class="data-table">
+            <thead><tr><th>ページ</th><th>機能</th></tr></thead>
+            <tbody>
+                <tr><td><a href="/">ダッシュボード</a></td><td>コンテスト概要とリーダーボードの上位5件</td></tr>
+                <tr><td><a href="/submit">提出・評価</a></td><td>アルゴリズムを選んで評価を実行</td></tr>
+                <tr><td><a href="/leaderboard">リーダーボード</a></td><td>部門別のランキング</td></tr>
+                <tr><td><a href="/history">提出履歴</a></td><td>過去の評価結果を一覧で確認</td></tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            このチュートリアルはナビバーの「<strong>チュートリアル</strong>」からいつでも再表示できます。
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<div class="tutorial-actions">
+    <div>
+        <button class="btn-outline" id="btn-skip" onclick="completeTutorial()">スキップしてダッシュボードへ</button>
+    </div>
+    <div class="right">
+        <button class="btn-outline" id="btn-prev" onclick="prevStep()" style="display:none;">← 前へ</button>
+        <button class="btn" id="btn-next" onclick="nextStep()">次へ →</button>
+        <a href="/" class="btn-success" id="btn-finish" style="display:none; text-decoration:none;">チュートリアルを完了 →</a>
+    </div>
+</div>
+
+<script>
+    let currentStep = 0;
+    const totalSteps = 6;
+
+    function updateUI() {
+        document.querySelectorAll('.tutorial-step').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.tutorial-step[data-step="${currentStep}"]`).classList.add('active');
+
+        // Update progress dots
+        const progress = document.getElementById('progress');
+        let dotsHtml = '';
+        for (let i = 0; i < totalSteps; i++) {
+            let cls = 'dot';
+            if (i === currentStep) cls += ' active';
+            else if (i < currentStep) cls += ' done';
+            dotsHtml += `<span class="${cls}" onclick="goToStep(${i})"></span>`;
+        }
+        dotsHtml += `<span class="step-label">Step ${currentStep + 1} / ${totalSteps}</span>`;
+        progress.innerHTML = dotsHtml;
+
+        // Buttons
+        document.getElementById('btn-prev').style.display = currentStep > 0 ? 'inline-block' : 'none';
+        document.getElementById('btn-next').style.display = currentStep < totalSteps - 1 ? 'inline-block' : 'none';
+        document.getElementById('btn-finish').style.display = currentStep === totalSteps - 1 ? 'inline-flex' : 'none';
+        document.getElementById('btn-skip').textContent = currentStep === totalSteps - 1 ? 'ダッシュボードへ' : 'スキップしてダッシュボードへ';
+
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function nextStep() {
+        if (currentStep < totalSteps - 1) { currentStep++; updateUI(); }
+    }
+    function prevStep() {
+        if (currentStep > 0) { currentStep--; updateUI(); }
+    }
+    function goToStep(n) {
+        currentStep = n; updateUI();
+    }
+    function completeTutorial() {
+        localStorage.setItem('pwscup_tutorial_done', '1');
+        window.location.href = '/';
+    }
+
+    // Mark as done when finishing
+    document.getElementById('btn-finish').addEventListener('click', function() {
+        localStorage.setItem('pwscup_tutorial_done', '1');
+    });
+
+    updateUI();
+</script>
+{% endblock %}

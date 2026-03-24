@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}ログイン{% endblock %}
+{% block content %}
+<h1>ログイン</h1>
+
+<div class="card" style="max-width:480px;">
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+        <div class="form-group">
+            <label for="team_name">チーム名</label>
+            <input type="text" name="team_name" id="team_name" required placeholder="例: Team Alpha">
+        </div>
+        <div class="form-group">
+            <label for="password">パスワード</label>
+            <input type="password" name="password" id="password" required placeholder="パスワード">
+        </div>
+        <button type="submit" class="btn">ログイン</button>
+    </form>
+
+    <p class="text-muted mt-1" style="margin-top:1rem;">
+        アカウントをお持ちでない場合は <a href="/register" style="color:var(--primary);">チーム登録</a> してください。
+    </p>
+    <p class="text-muted" style="margin-top:0.5rem; font-size:0.85rem;">
+        デモチーム (Team Alpha / Team Beta / Team Gamma) のパスワードは <code>demo</code> です。
+    </p>
+</div>
+{% endblock %}

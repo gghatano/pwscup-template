@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}チーム登録{% endblock %}
+{% block content %}
+<h1>チーム登録</h1>
+
+<div class="card" style="max-width:480px;">
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/register">
+        <div class="form-group">
+            <label for="team_name">チーム名</label>
+            <input type="text" name="team_name" id="team_name" required placeholder="チーム名を入力">
+        </div>
+        <div class="form-group">
+            <label for="password">パスワード</label>
+            <input type="password" name="password" id="password" required placeholder="4文字以上" minlength="4">
+        </div>
+        <button type="submit" class="btn">登録してログイン</button>
+    </form>
+
+    <p class="text-muted mt-1" style="margin-top:1rem;">
+        既にアカウントをお持ちの場合は <a href="/login" style="color:var(--primary);">ログイン</a> してください。
+    </p>
+</div>
+{% endblock %}

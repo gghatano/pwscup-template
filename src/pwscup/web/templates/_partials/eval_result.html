@@ -14,14 +14,23 @@
             <tr><td style="padding-left:2rem;">ML有用性</td><td>{{ "%.4f"|format(ml_utility) }}</td></tr>
             <tr><th>有用性 U</th><td class="score">{{ "%.4f"|format(utility_score) }}</td></tr>
 
-            <tr><th colspan="2" style="color:var(--primary);padding-top:1rem;">安全性スコア (S_auto)</th></tr>
+            <tr><th colspan="2" style="color:var(--primary);padding-top:1rem;">
+                安全性スコア (S)
+                {% if safety_mode is defined and safety_mode == "reid_top3" %}
+                <span class="text-muted" style="font-size:0.75rem; font-weight:normal;">再識別ベース</span>
+                {% endif %}
+            </th></tr>
+            {% if safety_mode is defined and safety_mode == "reid_top3" %}
+            <tr><td style="padding-left:2rem;" class="text-muted">評価方式</td><td class="text-muted">1 - avg(再識別 top3 F1)</td></tr>
+            {% else %}
             <tr><td style="padding-left:2rem;">k-匿名性</td><td>k = {{ k_anonymity }}</td></tr>
             <tr><td style="padding-left:2rem;">l-多様性</td><td>l = {{ l_diversity }}</td></tr>
             <tr><td style="padding-left:2rem;">t-近接性</td><td>t = {{ "%.4f"|format(t_closeness) }}</td></tr>
-            <tr><th>安全性 S_auto</th><td class="score">{{ "%.4f"|format(safety_score_auto) }}</td></tr>
+            {% endif %}
+            <tr><th>安全性 S</th><td class="score">{{ "%.4f"|format(safety_score_auto) }}</td></tr>
 
             <tr style="border-top:2px solid var(--primary);">
-                <th style="font-size:1.1rem;">暫定スコア (U × S_auto)</th>
+                <th style="font-size:1.1rem;">スコア (U × S)</th>
                 <td class="score good" style="font-size:1.1rem;">{{ "%.4f"|format(anon_score) }}</td>
             </tr>
             {% else %}

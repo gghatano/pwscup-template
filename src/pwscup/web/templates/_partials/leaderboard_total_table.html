@@ -1,0 +1,26 @@
+{% if entries %}
+<table>
+    <thead>
+        <tr>
+            <th>順位</th>
+            <th>チーム</th>
+            <th>匿名化順位</th>
+            <th>再識別順位</th>
+            <th>総合ポイント</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.rank }}</td>
+            <td>{{ entry.team_name }}</td>
+            <td>{{ entry.anon_rank if entry.anon_rank else "-" }}</td>
+            <td>{{ entry.reid_rank if entry.reid_rank else "-" }}</td>
+            <td class="score good">{{ "%.2f"|format(entry.total_points) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">まだ提出がありません。</p>
+{% endif %}

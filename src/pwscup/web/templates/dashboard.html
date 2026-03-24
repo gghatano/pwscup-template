@@ -1,23 +1,53 @@
 {% extends "base.html" %}
 {% block title %}ダッシュボード{% endblock %}
 {% block content %}
+<script>
+    // 初回アクセス時はチュートリアルへ自動誘導
+    if (!localStorage.getItem('pwscup_tutorial_done')) {
+        window.location.href = '/tutorial';
+    }
+</script>
+
+<div id="tutorial-banner" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+        <strong>はじめての方へ:</strong> チュートリアルでコンテストの仕組みを学べます。
+    </div>
+    <div style="display:flex; gap:0.5rem;">
+        <a href="/tutorial" style="background:#2563eb; color:white; padding:0.4rem 0.8rem; border-radius:4px; text-decoration:none; font-size:0.85rem;">チュートリアルを始める</a>
+        <button onclick="this.parentElement.parentElement.style.display='none'; localStorage.setItem('pwscup_banner_hidden','1');" style="background:transparent; border:1px solid #bfdbfe; padding:0.4rem 0.8rem; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#64748b;">閉じる</button>
+    </div>
+</div>
+<script>
+    // バナーはチュートリアル完了済みかつ非表示設定でなければ表示
+    (function() {
+        var done = localStorage.getItem('pwscup_tutorial_done');
+        var hidden = localStorage.getItem('pwscup_banner_hidden');
+        var banner = document.getElementById('tutorial-banner');
+        if (done && !hidden) {
+            banner.style.display = 'flex';
+        } else {
+            banner.style.display = 'none';
+        }
+    })();
+</script>
+
 <h1>PWSCUP データ匿名化・再識別コンテスト</h1>
 
 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
     <div class="card">
         <h2>匿名化部門（守り）</h2>
         <p>生データを匿名化し、<strong>有用性</strong>を保ちつつ個人を特定できないデータを生成します。</p>
-        <p class="text-muted mt-1">スコア = 有用性 U × 安全性 S</p>
+        <p class="text-muted mt-1">スコア = 有用性 U x 安全性 S</p>
     </div>
     <div class="card">
         <h2>再識別部門（攻め）</h2>
         <p>匿名化されたデータに対して攻撃し、元データとの<strong>対応関係</strong>を復元します。</p>
-        <p class="text-muted mt-1">スコア = Precision × Recall × 難易度加重</p>
+        <p class="text-muted mt-1">スコア = Precision x Recall x 難易度加重</p>
     </div>
     <div class="card">
-        <h2>スコアリングの仕組み</h2>
-        <p>匿名化スコアは<strong>有用性 × 安全性</strong>の積。片方を犠牲にすると0点になる設計です。</p>
-        <p class="text-muted mt-1">トレードオフの最適化が鍵</p>
+        <h2>総合スコア</h2>
+        <p>総合ポイント = <code>50/匿名化順位 + 50/再識別順位</code>。両部門1位なら<strong>100ポイント</strong>。</p>
+        <p class="text-muted mt-1">両方の部門で上位を目指そう</p>
     </div>
 </div>
 
@@ -51,8 +81,12 @@
 
 <div class="card">
     <div style="display:flex; gap:1rem;">
-        <a href="/submit" class="btn">評価を試す →</a>
-        <a href="/leaderboard" class="btn" style="background:#475569;">リーダーボードを見る →</a>
+        {% if logged_in_team %}
+        <a href="/submit" class="btn">評価を試す</a>
+        {% else %}
+        <a href="/login" class="btn">ログインして評価を試す</a>
+        {% endif %}
+        <a href="/leaderboard" class="btn" style="background:#475569;">リーダーボードを見る</a>
     </div>
 </div>
 {% endblock %}
